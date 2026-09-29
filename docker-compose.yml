@@ -1,0 +1,112 @@
+# Precios de Frontera — infraestructura local
+#
+#   docker compose up -d                 → Postgres (PostGIS + pgvector) + Metabase
+#   docker compose --profile n8n up -d   → además levanta un n8n propio del proyecto
+#   docker compose run --rm pipelines python -m pipelines.cambio.bcb_ptax --dias 30
+#   docker compose --profile jupyter up -d   → Jupyter Lab con el mismo entorno
+#
+# Si ya tenés un n8n corriendo aparte, no uses el perfil "n8n": conectalo a la base
+# con host "host.docker.internal" y el puerto POSTGRES_PORT (ver README).
+
+name: precios-frontera
+
+# Entorno Python compartido por los pipelines y Jupyter. El repo se monta en /app,
+# así que los cambios en el código se ven sin reconstruir la imagen.
+x-python: &python
+  build:
+    context: .
+    dockerfile: docker/python/Dockerfile
+  image: precios-frontera/python:3.11
+  depends_on:
+    postgres:
+      condition: service_healthy
+  environment:
+    # Dentro de la red de Docker la base es "postgres:5432"; el resto de las
+    # variables se leen del .env montado (python-dotenv no pisa estas dos).
+    POSTGRES_HOST: postgres
+    POSTGRES_PORT: 5432
+    TZ: ${TZ:-America/Montevideo}
+  volumes:
+    - .:/app
+
+services:
+  postgres:
+    build: ./docker/postgres
+    image: precios-frontera/postgres:17-postgis-pgvector
+    container_name: pf-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-precios}
+      POSTGRES_USER: ${POSTGRES_USER:-precios}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Definí POSTGRES_PASSWORD en .env}
+      TZ: ${TZ:-America/Montevideo}
+    ports:
+      # Solo en localhost: la base no queda expuesta a la red
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - pf_pgdata:/var/lib/postgresql/data
+      # Se ejecutan en orden alfabético solo la primera vez (volumen vacío)
+      - ./sql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  metabase:
+    image: metabase/metabase:latest
+    container_name: pf-metabase
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Metabase guarda su propia configuración en una base aparte (no en H2)
+      MB_DB_TYPE: postgres
+      MB_DB_HOST: postgres
+      MB_DB_PORT: 5432
+      MB_DB_DBNAME: metabase
+      MB_DB_USER: ${POSTGRES_USER:-precios}
+      MB_DB_PASS: ${POSTGRES_PASSWORD}
+      JAVA_TIMEZONE: ${TZ:-America/Montevideo}
+    ports:
+      - "127.0.0.1:${METABASE_PORT:-3000}:3000"
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: pf-n8n
+    profiles: ["n8n"]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      TZ: ${TZ:-America/Montevideo}
+      GENERIC_TIMEZONE: ${TZ:-America/Montevideo}
+      N8N_RESTRICT_FILE_ACCESS_TO: /files
+    ports:
+      # 5679 para no chocar con un n8n que ya use el 5678
+      - "127.0.0.1:${N8N_PORT:-5679}:5678"
+    volumes:
+      - pf_n8n:/home/node/.n8n
+      - ./data/inbox:/files
+
+  pipelines:
+    <<: *python
+    profiles: ["pipelines"]
+
+  jupyter:
+    <<: *python
+    container_name: pf-jupyter
+    profiles: ["jupyter"]
+    restart: unless-stopped
+    # El token de acceso aparece en: docker compose logs jupyter
+    command: >
+      jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root
+      --ServerApp.root_dir=/app
+    ports:
+      - "127.0.0.1:${JUPYTER_PORT:-8888}:8888"
+
+volumes:
+  pf_pgdata:
+  pf_n8n:

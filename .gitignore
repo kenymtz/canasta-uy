@@ -1,0 +1,21 @@
+# Secretos
+.env
+*.pem
+
+# Datos: se descargan con los pipelines, no se versionan
+data/raw/*
+data/inbox/*
+!data/**/.gitkeep
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.ipynb_checkpoints/
+
+# Exportaciones de n8n con credenciales (exportá solo workflows)
+n8n/**/credentials*.json
+
+# Sistema
+.DS_Store
+Thumbs.db
