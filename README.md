@@ -94,6 +94,7 @@ docker compose up -d              # Postgres + Metabase
 
 # Pipelines: cada ejecución usa un contenedor descartable con el código montado
 docker compose run --rm pipelines python -m pipelines.cambio.bcb_ptax --dias 30
+docker compose run --rm pipelines python -m pipelines.fuentes.sipc   # SIPC: baja ~2 GB
 
 # Notebooks: Jupyter Lab con el mismo entorno (el token aparece en los logs)
 docker compose --profile jupyter up -d
@@ -129,7 +130,8 @@ docker compose logs jupyter
 - [x] Modelo de datos multi-país y vista comparable en USD
 - [x] Pipeline de tipo de cambio: PTAX (Brasil)
 - [ ] Tipos de cambio: BCU (Uruguay) y BCRA (Argentina)
-- [ ] Ingesta SIPC 🇺🇾 (carga inicial + incremental diaria)
+- [x] Ingesta SIPC 🇺🇾 a la capa raw (27 M precios de 2025)
+- [ ] Normalización SIPC → core (coordenadas, duplicados, cantidades)
 - [ ] Ingesta SEPA 🇦🇷
 - [ ] Controles de calidad de datos y alertas
 - [ ] Catálogo canónico y matching multilingüe (reglas → embeddings)

@@ -54,7 +54,7 @@ Pares de ciudades:
 
 | Fuente | País | Notas |
 |---|---|---|
-| SIPC (precios.uy / catalogodatos.gub.uy) | UY | Oficial, diaria, geolocalizada |
+| SIPC (precios.uy / catalogodatos.gub.uy) | UY | Oficial, geolocalizada. Precios diarios, pero el catálogo abierto publica un archivo por año que se actualiza cada trimestre (último dato: 31/12/2025) |
 | Precios Claros – Base SEPA (datos.produccion.gob.ar) | AR | Oficial, ~12 M precios/día, grandes cadenas, CC BY 4.0 |
 | NFC-e por QR del ticket (SEFAZ-RS) | BR | No hay base abierta; los tickets alimentan la base (crowdsourcing) |
 | PTAX – Banco Central do Brasil (API Olinda) | BR | Tipo de cambio oficial, JSON, sin autenticación |
@@ -98,6 +98,12 @@ GitHub como repositorio público: https://github.com/kenymtz/precios-frontera
   - `02_datos_base.sql`: países, 9 pares de frontera, fuentes.
   - `03_vistas.sql`: función `core.a_unidad_base` y vista `mart.precio_comparable`
     (precio en USD por kg/l/unidad con el último cambio oficial).
+  - `04_raw_sipc.sql`: `raw.sipc_productos`, `raw.sipc_establecimientos` y `raw.sipc_precios`,
+    con las columnas en el orden de cada CSV (COPY asigna por posición). Se aplicó a mano
+    sobre la base existente (los scripts de init solo corren con el volumen vacío).
+- `pipelines/fuentes/sipc.py`: baja los 3 CSV del SIPC a `data/raw/sipc/` (solo si cambió el
+  tamaño) y los carga en raw con TRUNCATE + COPY en una transacción (idempotente). Valida el
+  encabezado de cada archivo como contrato. Precios: 26.951.118 filas en ~1,5 min (~3 GB en la base).
 - `pipelines/cambio/bcb_ptax.py`: **primer pipeline funcionando** (probado con la API real
   en `--dry-run`; por ejemplo, 25/09/2026 1 USD = 5,1991 BRL). Carga idempotente en `core.tipo_cambio`.
 - `pipelines/comun/db.py`, `requirements.txt`, `.env.example`, `.gitignore`, `README.md`
@@ -116,6 +122,9 @@ GitHub como repositorio público: https://github.com/kenymtz/precios-frontera
 - Carga real de PTAX: 21 días hábiles (31/08 a 29/09/2026) en `core.tipo_cambio`; al
   volver a correrla no se duplican filas.
 - Metabase responde (`/api/health` 200) y Jupyter Lab arranca con el perfil `jupyter`.
+- Metabase configurado: conexión "Precios de Frontera" (host `postgres`, puerto `5432`,
+  schemas `core` y `mart`, acciones de modelo apagadas). Su configuración vive en la base
+  `metabase` del volumen `pf_pgdata`: `docker compose down -v` la borra junto con los datos.
 
 ### Python corre en Docker, no en Windows
 
@@ -125,14 +134,47 @@ Decisión: no tocar la configuración de seguridad y correr los pipelines y los 
 el contenedor `pipelines` / `jupyter`. Además, así es igual que en el futuro VPS.
 Después de cambiar `requirements.txt` hay que reconstruir la imagen: `docker compose build pipelines`.
 
+### Hallazgos del SIPC (29/09/2026)
+
+Formato de los archivos (exportados desde R, por eso los nombres tipo `id.producto`):
+- `productos.csv` y `establecimiento.csv`: separador `;`, encoding **Latin-1**, coma decimal.
+- `precios_2025.csv`: separador `,`, ASCII, punto decimal, nulos como `"\N"` entre comillas
+  (requiere `FORCE_NULL`). Los 26 ids múltiplos de un millón vienen en notación científica
+  (`1.75e+08` = 175000000): por eso `id_precio_diario` es `numeric` en raw.
+
+Calidad de datos (a resolver al pasar a core):
+- **Latitud y longitud cruzadas** en 846 de 849 comercios con coordenadas: la columna `long`
+  trae la latitud. Además 3 sin coordenadas, 2 sin el signo menos (Ta-Ta Mercado Agrícola,
+  Supermercado Atlantic) y 1 geocodificado en Ezeiza (San Roque Aeropuerto, Ciudad de la Costa).
+- **Duplicados** de (fecha, comercio, producto): 103.765 combinaciones (0,8 % de las filas),
+  hasta 3 repeticiones. 60 % son copias idénticas, 37 % el mismo precio reenviado a otra hora
+  y 3,5 % (3.641) tienen **precios distintos** el mismo día. Regla propuesta para core:
+  quedarse con la última `declaracion` (y ante empate, el mayor `id_precio_diario`).
+- 2 comercios con precios que no están en el catálogo de establecimientos. Ningún producto huérfano.
+- Catálogo: 379 productos y 852 comercios; con precios en 2025: 279 productos y 716 comercios.
+- `especificacion` es texto ("Envase 900 cc"): la cantidad y la unidad se extraen en core.
+
+Cobertura en la frontera (comercios con precios en 2025): Salto 14, Paysandú 9, Rivera 6,
+Fray Bentos 5, Artigas 2, Río Branco 2, Chuy 1; **Bella Unión y Aceguá: 0** (solo se podrán
+cubrir con tickets).
+
+Otras fuentes evaluadas:
+- precios.uy / app PreciosGub muestran precios actuales; el sitio ofrece "Solicitud de base de
+  datos" (equiposipc@consumidor.gub.uy). Pendiente: pedir datos más recientes.
+- Open Prices (Open Food Facts): abierta y con API, pero casi todo es de Europa.
+- **Open Food Facts (productos)**: EAN → nombre, marca y tamaño en varios idiomas; útil para el matching.
+- Scraping de tiendas online: descartado (términos de uso, fragilidad, portafolio público y,
+  sobre todo, no cubre los comercios de frontera, que es lo que falta).
+
 ## Próximos pasos
 
-1. Explorar un CSV real del SIPC en `notebooks/` → diseñar `raw.sipc_*` → `pipelines/fuentes/sipc.py`
-   (carga inicial + incremental diaria + controles de calidad).
-2. Lo mismo con SEPA (Argentina).
-3. Pipelines de cambio BCU y BCRA.
-4. Catálogo canónico y matching (reglas → embeddings) + set de evaluación.
-5. NFC-e por QR (Brasil), tickets por foto, recomendador con PostGIS, bot de WhatsApp,
+1. SIPC raw → core: comercios (corregir coordenadas, PostGIS), productos (`producto_fuente`
+   con cantidad/unidad), precios (sin duplicados, `id` a bigint) + controles de calidad.
+2. Escribir al equipo del SIPC para pedir datos más recientes que el 31/12/2025.
+3. SEPA (Argentina): explorar, `raw.sepa_*`, pipeline.
+4. Pipelines de cambio BCU y BCRA.
+5. Catálogo canónico y matching (EAN/Open Food Facts → reglas → embeddings) + set de evaluación.
+6. NFC-e por QR (Brasil), tickets por foto, recomendador con PostGIS, bot de WhatsApp,
    dashboard en Metabase.
 
 ## Entorno disponible
