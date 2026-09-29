@@ -104,6 +104,17 @@ GitHub como repositorio público: https://github.com/kenymtz/precios-frontera
 - `pipelines/fuentes/sipc.py`: baja los 3 CSV del SIPC a `data/raw/sipc/` (solo si cambió el
   tamaño) y los carga en raw con TRUNCATE + COPY en una transacción (idempotente). Valida el
   encabezado de cada archivo como contrato. Precios: 26.951.118 filas en ~1,5 min (~3 GB en la base).
+  El paso `core` ejecuta `sql/transform/sipc_core.sql` en una transacción (~4 min) e imprime un
+  reporte de calidad.
+- `sql/transform/sipc_core.sql`: raw → core. Comercios (upsert; coordenadas corregidas a
+  geography), productos (upsert; cantidad y unidad extraídas de `especificacion` con una
+  expresión regular) y precios (se reemplaza el período del archivo; DISTINCT ON elimina
+  duplicados quedándose con el último envío del día). Resultado: 852 comercios (4 sin
+  ubicación), 379 productos (12 sin cantidad) y 26.846.628 precios (−657 huérfanos,
+  −103.833 duplicados).
+- Cambios de esquema en core (también aplicados con ALTER en la base existente):
+  `producto_fuente.tipo` (tipo sin marca según la fuente, para el matching) y
+  `precio.es_oferta` (13 % de los precios del SIPC son ofertas).
 - `pipelines/cambio/bcb_ptax.py`: **primer pipeline funcionando** (probado con la API real
   en `--dry-run`; por ejemplo, 25/09/2026 1 USD = 5,1991 BRL). Carga idempotente en `core.tipo_cambio`.
 - `pipelines/comun/db.py`, `requirements.txt`, `.env.example`, `.gitignore`, `README.md`
@@ -148,9 +159,15 @@ Calidad de datos (a resolver al pasar a core):
   Supermercado Atlantic) y 1 geocodificado en Ezeiza (San Roque Aeropuerto, Ciudad de la Costa).
 - **Duplicados** de (fecha, comercio, producto): 103.765 combinaciones (0,8 % de las filas),
   hasta 3 repeticiones. 60 % son copias idénticas, 37 % el mismo precio reenviado a otra hora
-  y 3,5 % (3.641) tienen **precios distintos** el mismo día. Regla propuesta para core:
+  y 3,5 % (3.641) tienen **precios distintos** el mismo día. Regla aplicada en core:
   quedarse con la última `declaracion` (y ante empate, el mayor `id_precio_diario`).
-- 2 comercios con precios que no están en el catálogo de establecimientos. Ningún producto huérfano.
+- 2 comercios (ids 1023 y 1024) con precios que no están en el catálogo: solo informan del
+  29 al 31/12/2025 y el catálogo de comercios es de noviembre, así que son comercios nuevos.
+  Sus 657 precios se descartan en core hasta que se actualice el catálogo. Ningún producto huérfano.
+- Marcas: 74 vacías y variantes de "sin marca" ("Con Hueso - Sin Marca") → NULL en core.
+  Cadena "Sin Cadena" → NULL.
+- 81.149 precios con 3 decimales: se redondean al centésimo en core.
+- `publico` y `feria_id` vienen vacías en todo 2025: no se pasan a core.
 - Catálogo: 379 productos y 852 comercios; con precios en 2025: 279 productos y 716 comercios.
 - `especificacion` es texto ("Envase 900 cc"): la cantidad y la unidad se extraen en core.
 
@@ -168,9 +185,9 @@ Otras fuentes evaluadas:
 
 ## Próximos pasos
 
-1. SIPC raw → core: comercios (corregir coordenadas, PostGIS), productos (`producto_fuente`
-   con cantidad/unidad), precios (sin duplicados, `id` a bigint) + controles de calidad.
-2. Escribir al equipo del SIPC para pedir datos más recientes que el 31/12/2025.
+1. Escribir al equipo del SIPC para pedir datos más recientes que el 31/12/2025.
+2. Agregar `es_oferta` a `mart.precio_comparable` y guardar el reporte de calidad de cada
+   carga en una tabla (hoy solo se imprime).
 3. SEPA (Argentina): explorar, `raw.sepa_*`, pipeline.
 4. Pipelines de cambio BCU y BCRA.
 5. Catálogo canónico y matching (EAN/Open Food Facts → reglas → embeddings) + set de evaluación.

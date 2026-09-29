@@ -5,7 +5,7 @@ los carga en `raw.*` y después los normaliza hacia `core.*`.
 
 | Módulo | Fuente | País | Estado |
 |---|---|---|---|
-| `sipc.py` | Sistema de Información de Precios al Consumidor | 🇺🇾 | Carga a `raw` lista; falta `core` |
+| `sipc.py` | Sistema de Información de Precios al Consumidor | 🇺🇾 | `raw` y `core` listos |
 | `sepa.py` | Precios Claros – Base SEPA | 🇦🇷 | Pendiente |
 | `nfce_rs.py` | NFC-e a partir del QR del ticket (SEFAZ-RS) | 🇧🇷 | Pendiente |
 

@@ -131,7 +131,7 @@ docker compose logs jupyter
 - [x] Pipeline de tipo de cambio: PTAX (Brasil)
 - [ ] Tipos de cambio: BCU (Uruguay) y BCRA (Argentina)
 - [x] Ingesta SIPC 🇺🇾 a la capa raw (27 M precios de 2025)
-- [ ] Normalización SIPC → core (coordenadas, duplicados, cantidades)
+- [x] Normalización SIPC → core (coordenadas, duplicados, cantidades)
 - [ ] Ingesta SEPA 🇦🇷
 - [ ] Controles de calidad de datos y alertas
 - [ ] Catálogo canónico y matching multilingüe (reglas → embeddings)

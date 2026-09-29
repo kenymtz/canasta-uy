@@ -66,6 +66,7 @@ CREATE TABLE core.producto_fuente (
     fuente_id               int     NOT NULL REFERENCES core.fuente,
     id_externo              text    NOT NULL,  -- id en la fuente, EAN o código del ticket
     descripcion_original    text    NOT NULL,  -- "LEITE INTEGRAL PIRACANJUBA 1L"
+    tipo                    text,              -- tipo sin marca según la fuente: "Aceite de girasol"
     marca                   text,
     ean                     text,
     cantidad                numeric,           -- 1000
@@ -94,6 +95,7 @@ CREATE TABLE core.precio (
     producto_fuente_id      bigint  NOT NULL REFERENCES core.producto_fuente,
     precio                  numeric(14, 2) NOT NULL CHECK (precio > 0),
     moneda                  char(3) NOT NULL,
+    es_oferta               boolean NOT NULL DEFAULT false,
     PRIMARY KEY (fecha, establecimiento_id, producto_fuente_id)
 );
 CREATE INDEX ON core.precio (producto_fuente_id, fecha DESC);
