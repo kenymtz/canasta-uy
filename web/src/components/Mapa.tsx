@@ -22,7 +22,16 @@ const ESTILOS = {
   claro: "https://tiles.openfreemap.org/styles/positron",
   oscuro: "https://tiles.openfreemap.org/styles/dark",
 };
-const URUGUAY: [number, number] = [-56.0, -32.7];
+// Uruguay entero: así arranca el mapa, antes de elegir ubicación
+const URUGUAY: [[number, number], [number, number]] = [
+  [-58.45, -35.0],
+  [-53.1, -30.1],
+];
+// Rectángulo de Uruguay con un margen chico: el mapa no se puede mover ni alejar fuera de él
+const LIMITES_URUGUAY: [[number, number], [number, number]] = [
+  [-59.0, -35.3],
+  [-52.6, -29.7],
+];
 const MAX_ETIQUETAS = 15; // con más, el mapa se vuelve ilegible
 
 interface Props {
@@ -109,8 +118,9 @@ export function Mapa({ centro, radioKm, comercios, resultados, seleccionado, onS
     const m = new MapaML({
       container: contenedor.current,
       style: oscuro() ? ESTILOS.oscuro : ESTILOS.claro,
-      center: URUGUAY,
-      zoom: 5.4,
+      bounds: URUGUAY,
+      fitBoundsOptions: { padding: 24 },
+      maxBounds: LIMITES_URUGUAY,
       attributionControl: false,
     });
     m.addControl(new NavigationControl({ showCompass: false }), "top-right");

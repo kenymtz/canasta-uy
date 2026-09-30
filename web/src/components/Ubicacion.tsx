@@ -78,7 +78,7 @@ export function Ubicacion({ ciudades, ubicacion, radioKm, onElegir, onRadio }: P
             onChange={(e) => elegirCiudad(e.target.value)}
           >
             <option value="" disabled>
-              {departamento ? "Elegí una" : "Primero el departamento"}
+              Elegí una
             </option>
             {ubicacion?.ciudad === PUNTO_EN_EL_MAPA && <option>{PUNTO_EN_EL_MAPA}</option>}
             {ciudadesDelDepto.map((c) => (
