@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatoCantidad, formatoPlata } from "./formato";
+import { formatoCantidad, formatoPlata, nombreProducto } from "./formato";
 
 describe("formatoPlata", () => {
   it("usa punto de miles y coma decimal, como en Uruguay", () => {
@@ -32,5 +32,16 @@ describe("formatoCantidad", () => {
   it("unidades y metros", () => {
     expect(formatoCantidad(12, "unidad")).toBe("12 u");
     expect(formatoCantidad(120, "m")).toBe("120 m");
+  });
+});
+
+describe("nombreProducto", () => {
+  it("saca la cantidad que el SIPC agrega al final de algunos nombres", () => {
+    expect(nombreProducto("Papa Blanca,  1.0 kilogramos")).toBe("Papa Blanca");
+    expect(nombreProducto("Crema Facial Revitalift Filler Dia, 50.0 mililitros")).toBe("Crema Facial Revitalift Filler Dia");
+  });
+
+  it("deja igual los nombres sin ese agregado", () => {
+    expect(nombreProducto("Arroz blanco Aruba tipo Patna Bolsa 1 kg.")).toBe("Arroz blanco Aruba tipo Patna Bolsa 1 kg.");
   });
 });

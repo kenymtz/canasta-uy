@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Canasta } from "./components/Canasta";
 import { Encabezado } from "./components/Encabezado";
 import { Mapa } from "./components/Mapa";
+import { Resultados } from "./components/Resultados";
 import { PUNTO_EN_EL_MAPA, Ubicacion } from "./components/Ubicacion";
 import { api, type Ciudad, type Comercio, type Generico } from "./lib/api";
+import { useCotizacion } from "./hooks/useCotizacion";
 import { useCanasta } from "./store/canasta";
 
 export default function App() {
@@ -14,6 +16,12 @@ export default function App() {
   const [ciudades, setCiudades] = useState<Ciudad[]>([]);
   const [comercios, setComercios] = useState<Comercio[]>([]);
   const [genericos, setGenericos] = useState<Generico[]>([]);
+  const [seleccionado, setSeleccionado] = useState<number | null>(null);
+  const cotizacion = useCotizacion({ ubicacion, radioKm, items, presupuesto });
+  const genericosPorNombre = useMemo(() => new Map(genericos.map((g) => [g.nombre, g])), [genericos]);
+
+  // Con resultados nuevos, no queda nada abierto en la lista
+  useEffect(() => setSeleccionado(null), [cotizacion.resultados]);
 
   useEffect(() => {
     api.salud().then((s) => setUltimoPrecio(s.ultimo_precio)).catch(() => {});
@@ -48,9 +56,9 @@ export default function App() {
           centro={ubicacion}
           radioKm={radioKm}
           comercios={comercios}
-          resultados={[]}
-          seleccionado={null}
-          onSeleccionar={() => {}}
+          resultados={cotizacion.resultados}
+          seleccionado={seleccionado}
+          onSeleccionar={setSeleccionado}
           onElegirPunto={elegirPunto}
         />
       </section>
@@ -72,6 +80,20 @@ export default function App() {
           onBasica={() => cargarBasica(genericos)}
           onVaciar={vaciar}
           onPresupuesto={setPresupuesto}
+        />
+        <Resultados
+          fase={cotizacion.fase}
+          resultados={cotizacion.resultados}
+          error={cotizacion.error}
+          genericos={genericosPorNombre}
+          presupuesto={presupuesto}
+          radioKm={radioKm}
+          hayUbicacion={ubicacion !== null}
+          hayProductos={Object.keys(items).length > 0}
+          seleccionado={seleccionado}
+          onSeleccionar={setSeleccionado}
+          onAmpliar={() => setRadio(Math.min(radioKm + 5, 20))}
+          onReintentar={cotizacion.reintentar}
         />
       </aside>
     </div>

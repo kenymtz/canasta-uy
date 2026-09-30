@@ -75,6 +75,9 @@ body {
   background: var(--color-ticket);
   border-radius: var(--radius-caja) var(--radius-caja) 0 0;
   padding-bottom: calc(var(--diente) / 2 + 12px);
+  /* El total animado (NumberFlow) deja márgenes invisibles a los costados para la animación
+     de los dígitos; sin esto, en el celular aparece un scroll horizontal de 10-15 px */
+  overflow-x: clip;
   mask:
     linear-gradient(#000 0 0) top / 100% calc(100% - var(--diente) / 2) no-repeat,
     conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom /

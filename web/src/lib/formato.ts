@@ -29,3 +29,8 @@ export function formatoCantidad(cantidad: number, unidad: Unidad): string {
 export function normalizar(texto: string): string {
   return texto.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 }
+
+/** "Papa Blanca,  1.0 kilogramos" → "Papa Blanca": el SIPC repite la cantidad al final. */
+export function nombreProducto(nombre: string): string {
+  return nombre.replace(/,\s+\d+(\.\d+)?\s+\p{L}+\s*$/u, "");
+}
