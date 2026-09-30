@@ -88,7 +88,7 @@ export default function App() {
           className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-linear-to-t from-[rgb(20_32_27_/_0.14)] to-transparent lg:inset-x-auto lg:inset-y-0 lg:right-0 lg:h-auto lg:w-10 lg:bg-linear-to-l"
         />
       </section>
-      <aside className="panel-cortado papel-libreta relative -mt-5 flex flex-col gap-8 px-5 pt-8 pb-16 lg:z-10 lg:mt-0 lg:-ml-2 lg:overflow-y-auto lg:px-8 lg:pt-10 lg:pl-10">
+      <aside className="panel-cortado fondo-pastel relative -mt-5 flex flex-col gap-8 px-5 pt-8 pb-16 lg:z-10 lg:mt-0 lg:-ml-2 lg:overflow-y-auto lg:px-8 lg:pt-10 lg:pl-10">
         <Encabezado
           ultimoPrecio={ultimoPrecio}
           comercios={ciudades.reduce((total, c) => total + c.comercios, 0)}

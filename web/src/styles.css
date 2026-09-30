@@ -226,21 +226,25 @@ body::after {
   }
 }
 
-/* Textura del panel: la libreta cuadriculada del almacén de barrio, donde se anota lo que
-   se lleva "fiado". Solo CSS, sin imágenes; "local" hace que se desplace con el contenido. */
-.papel-libreta {
-  --cuadricula: rgb(22 122 79 / 0.075);
+/* Fondo del panel: manchas pastel difusas, como acuarela sobre papel (menta, que sale del
+   acento, durazno y manteca). Se ubican respecto del panel: en la computadora el panel tiene
+   su propio scroll y las manchas quedan quietas detrás del contenido. El grano de papel de
+   body::after les da textura encima. */
+.fondo-pastel {
   background-color: var(--color-panel);
   background-image:
-    linear-gradient(var(--cuadricula) 1px, transparent 1px),
-    linear-gradient(90deg, var(--cuadricula) 1px, transparent 1px);
-  background-size: 22px 22px;
-  background-position: -1px -1px;
-  background-attachment: local;
+    radial-gradient(38rem 26rem at 105% -5%, rgb(178 228 200 / 0.62), transparent 70%),
+    radial-gradient(30rem 24rem at -10% 32%, rgb(255 212 186 / 0.55), transparent 70%),
+    radial-gradient(34rem 26rem at 110% 68%, rgb(255 234 170 / 0.5), transparent 70%),
+    radial-gradient(32rem 24rem at 0% 105%, rgb(190 232 222 / 0.55), transparent 70%);
 }
 
-:root[data-tema="oscuro"] .papel-libreta {
-  --cuadricula: rgb(228 235 232 / 0.045);
+:root[data-tema="oscuro"] .fondo-pastel {
+  background-image:
+    radial-gradient(38rem 26rem at 105% -5%, rgb(76 195 138 / 0.12), transparent 70%),
+    radial-gradient(30rem 24rem at -10% 32%, rgb(255 170 130 / 0.07), transparent 70%),
+    radial-gradient(34rem 26rem at 110% 68%, rgb(255 214 120 / 0.06), transparent 70%),
+    radial-gradient(32rem 24rem at 0% 105%, rgb(110 200 180 / 0.08), transparent 70%);
 }
 
 /* Botón de tema: el ícono que sale gira y se achica mientras aparece el otro */

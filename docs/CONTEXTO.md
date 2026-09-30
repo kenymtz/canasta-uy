@@ -294,7 +294,8 @@ Para el objetivo actual (web de compras al menor costo en Uruguay):
    estructura: grano de papel térmico, panel con borde dentado de ticket y sombra sobre el
    mapa, íconos por categoría, resaltador en el título, talón con datos reales (comercios,
    productos, departamentos, fecha) y cantidades animadas.
-   Botón de tema (sol/luna): por defecto sigue al sistema; la elección se guarda en el
+   Fondo del panel: manchas pastel difusas (menta, durazno, manteca), en lugar de la
+   cuadrícula que no le gustó a Augusto. Botón de tema (sol/luna): por defecto sigue al sistema; la elección se guarda en el
    navegador y un script en `index.html` la aplica antes de dibujar (sin destello). El CSS
    usa `:root[data-tema="oscuro"]` en lugar de `prefers-color-scheme`.
 5. **Usuarios y tickets:** cuentas, subir el ticket (investigar el QR del CFE de la DGI;
