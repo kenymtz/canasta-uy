@@ -1,0 +1,60 @@
+import { describe, expect, it } from "vitest";
+
+import { leerBoleta } from "./boleta";
+
+// Texto como el que sale de leer la foto de una boleta, con datos que NO se deben enviar
+const BOLETA = `
+TATA HIPER SALTO
+RUT 210000000012
+19 de Abril y Soca
+e-Ticket A 1234567
+ARROZ AMERICANO 1KG        51,00
+ACEITE GIRASOL 900ML       79,00
+YERBA CANARIAS 1KG        186,00
+7790387000123 LECHE ENTERA   42,50
+DESCUENTO SOCIO            -10,00
+SUBTOTAL                  348,50
+TOTAL                     348,50
+TARJETA VISA ****4821     348,50
+AUTORIZACION 084213
+CLIENTE: JUAN PEREZ
+C.I. 4.567.890-1
+juan.perez@correo.com
+CAJERA: MARIA
+`;
+
+describe("leerBoleta", () => {
+  const { productos, quitadas } = leerBoleta(BOLETA);
+
+  it("se queda con las líneas de productos y su precio", () => {
+    expect(productos).toEqual([
+      { descripcion: "ARROZ AMERICANO 1KG", precio: 51 },
+      { descripcion: "ACEITE GIRASOL 900ML", precio: 79 },
+      { descripcion: "YERBA CANARIAS 1KG", precio: 186 },
+      { descripcion: "••• LECHE ENTERA", precio: 42.5 },
+    ]);
+  });
+
+  it("nunca deja pasar datos de pago ni personales", () => {
+    const enviado = JSON.stringify(productos);
+    for (const sensible of ["4821", "084213", "JUAN", "PEREZ", "4.567.890", "correo", "MARIA", "210000000012", "7790387000123"]) {
+      expect(enviado).not.toContain(sensible);
+    }
+  });
+
+  it("cuenta las líneas que quitó por tener posibles datos personales", () => {
+    expect(quitadas).toBeGreaterThanOrEqual(6);
+  });
+
+  it("descarta totales, subtotales y descuentos", () => {
+    const textos = productos.map((p) => p.descripcion);
+    expect(textos).not.toContain("TOTAL");
+    expect(textos).not.toContain("SUBTOTAL");
+    expect(textos.some((t) => t.includes("DESCUENTO"))).toBe(false);
+  });
+
+  it("entiende precios con punto decimal o con separador de miles", () => {
+    expect(leerBoleta("QUESO RALLADO 80G 1.250,00").productos).toEqual([{ descripcion: "QUESO RALLADO 80G", precio: 1250 }]);
+    expect(leerBoleta("PAN FLAUTA 45.90").productos).toEqual([{ descripcion: "PAN FLAUTA", precio: 45.9 }]);
+  });
+});
