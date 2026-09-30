@@ -10,11 +10,14 @@ const entero = numero(0);
 const conCentesimos = numero(2);
 const hastaDosDecimales = new Intl.NumberFormat("es-UY", { maximumFractionDigits: 2 });
 
-/** $ 1.480,50 o $ 79 si es un monto entero. */
+/**
+ * $ 1.480,50 o $ 79 si es un monto entero. Entre el signo y el número va un espacio que no
+ * se corta ( ): así el "$" nunca queda solo al final de un renglón.
+ */
 export function formatoPlata(monto: number): string {
   const redondeado = Math.round(monto * 100) / 100;
   const formato = Number.isInteger(redondeado) ? entero : conCentesimos;
-  return `$ ${formato.format(redondeado)}`;
+  return `$ ${formato.format(redondeado)}`;
 }
 
 /** 500 g, 1,5 kg, 900 ml, 2 l, 12 u, 120 m. */

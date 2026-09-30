@@ -3,6 +3,7 @@ import { CaretDown, CheckCircle, WarningCircle } from "@phosphor-icons/react";
 
 import type { Generico, LineaCanasta, ResultadoComercio } from "../lib/api";
 import { formatoCantidad, formatoPlata, nombreProducto } from "../lib/formato";
+import { ID_TICKET } from "./Resumen";
 
 const km = new Intl.NumberFormat("es-UY", { maximumFractionDigits: 1 });
 const FORMATO_TOTAL = { style: "currency", currency: "UYU", maximumFractionDigits: 2 } as const;
@@ -65,7 +66,7 @@ interface PropsTicket {
 export function TicketDestacado({ r, genericos, presupuesto }: PropsTicket) {
   const completo = r.cobertura === 1;
   return (
-    <article className="ticket-sombra imprimir" aria-label={`Ticket de ${r.comercio}`}>
+    <article id={ID_TICKET} className="ticket-sombra imprimir scroll-mt-6" aria-label={`Ticket de ${r.comercio}`}>
       <div className="ticket px-5 pt-5">
         <p className="text-[13px] font-medium text-acento">{completo ? "Acá te sale más barata" : "El que tiene más de tu canasta"}</p>
         <h3 className="mt-1 text-xl leading-tight font-semibold tracking-tight">{r.comercio}</h3>

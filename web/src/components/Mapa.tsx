@@ -48,7 +48,7 @@ function prepararEstilo(mapa: MapaML) {
   const acento = token("--color-acento");
   if (!mapa.getSource("radio")) {
     mapa.addSource("radio", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-    mapa.addLayer({ id: "radio-relleno", type: "fill", source: "radio", paint: { "fill-color": acento, "fill-opacity": 0.07 } });
+    mapa.addLayer({ id: "radio-relleno", type: "fill", source: "radio", paint: { "fill-color": acento, "fill-opacity": 0.05 } });
     mapa.addLayer({
       id: "radio-borde",
       type: "line",
@@ -69,6 +69,25 @@ function prepararEstilo(mapa: MapaML) {
         "circle-stroke-width": 1.5,
       },
     });
+  }
+}
+
+/**
+ * Oculta las etiquetas que se pisan con otra más importante. Vienen ordenadas de la más
+ * conveniente a la menos; el comercio elegido (data-activo) va primero. Las ocultas siguen
+ * viéndose como punto en la capa de comercios.
+ */
+function evitarSolapes(etiquetas: Marker[]) {
+  const orden = [...etiquetas].sort(
+    (a, b) => Number(b.getElement().dataset.activo === "true") - Number(a.getElement().dataset.activo === "true"),
+  );
+  const ocupadas: DOMRect[] = [];
+  for (const marcador of orden) {
+    const el = marcador.getElement();
+    const r = el.getBoundingClientRect();
+    const choca = ocupadas.some((o) => r.left < o.right + 4 && r.right > o.left - 4 && r.top < o.bottom + 2 && r.bottom > o.top - 2);
+    el.style.visibility = choca ? "hidden" : "visible";
+    if (!choca) ocupadas.push(r);
   }
 }
 
@@ -106,6 +125,8 @@ export function Mapa({ centro, radioKm, comercios, resultados, seleccionado, onS
       if ((e.originalEvent.target as HTMLElement).closest(".pin")) return;
       callbacks.current.onElegirPunto(e.lngLat.lat, e.lngLat.lng);
     });
+    // Al mover o hacer zoom cambian las distancias en pantalla entre etiquetas
+    m.on("moveend", () => evitarSolapes(etiquetas.current));
     mapa.current = m;
 
     // Si el sistema cambia entre claro y oscuro, el mapa también
@@ -165,11 +186,17 @@ export function Mapa({ centro, radioKm, comercios, resultados, seleccionado, onS
     resultados.slice(0, MAX_ETIQUETAS).forEach((r, i) => {
       const c = posicion.get(r.establecimiento_id);
       if (!c) return;
+      // Un comercio incompleto parece más barato solo porque le faltan cosas: en lugar del
+      // precio, la etiqueta dice cuántos productos le faltan
       const completo = r.cobertura === 1;
+      const faltan = r.productos_pedidos - r.productos_con_precio;
       const boton = document.createElement("button");
       boton.type = "button";
-      boton.textContent = formatoPlata(r.total);
-      boton.setAttribute("aria-label", `${r.comercio}: ${formatoPlata(r.total)}`);
+      boton.textContent = completo ? formatoPlata(r.total) : `Faltan ${faltan}`;
+      boton.setAttribute(
+        "aria-label",
+        completo ? `${r.comercio}: ${formatoPlata(r.total)}` : `${r.comercio}: le faltan ${faltan} productos`,
+      );
       boton.dataset.activo = String(r.establecimiento_id === seleccionado);
       boton.className = [
         "pin numeros cursor-pointer rounded-full px-2.5 py-1 text-[12px] font-medium whitespace-nowrap",
@@ -177,7 +204,7 @@ export function Mapa({ centro, radioKm, comercios, resultados, seleccionado, onS
           ? "bg-acento text-sobre-acento"
           : completo
             ? "bg-ticket text-tinta ring-1 ring-linea"
-            : "bg-ticket text-tinta-suave ring-1 ring-linea opacity-80",
+            : "bg-panel text-tinta-suave ring-1 ring-linea",
         r.establecimiento_id === seleccionado ? "ring-2 ring-acento" : "",
       ].join(" ");
       boton.addEventListener("click", () => callbacks.current.onSeleccionar(r.establecimiento_id));
@@ -185,6 +212,7 @@ export function Mapa({ centro, radioKm, comercios, resultados, seleccionado, onS
       boton.style.zIndex = String(MAX_ETIQUETAS - i);
       etiquetas.current.push(new Marker({ element: boton }).setLngLat([c.lon, c.lat]).addTo(m));
     });
+    requestAnimationFrame(() => evitarSolapes(etiquetas.current));
   }, [resultados, comercios, seleccionado]);
 
   return <div ref={contenedor} className="h-full w-full" />;

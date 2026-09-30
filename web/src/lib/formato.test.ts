@@ -4,12 +4,12 @@ import { formatoCantidad, formatoPlata, nombreProducto } from "./formato";
 
 describe("formatoPlata", () => {
   it("usa punto de miles y coma decimal, como en Uruguay", () => {
-    expect(formatoPlata(1480.5)).toBe("$ 1.480,50");
+    expect(formatoPlata(1480.5)).toBe("$ 1.480,50");
   });
 
-  it("no muestra decimales si el monto es entero", () => {
-    expect(formatoPlata(79)).toBe("$ 79");
-    expect(formatoPlata(1518)).toBe("$ 1.518");
+  it("no muestra decimales si el monto es entero, y el signo no se separa del número", () => {
+    expect(formatoPlata(79)).toBe("$ 79");
+    expect(formatoPlata(1518)).toBe("$ 1.518");
   });
 });
 

@@ -84,7 +84,7 @@ export function Canasta({ genericos, items, presupuesto, onSumar, onRestar, onBa
       </div>
 
       {!busqueda && (
-        <div role="tablist" aria-label="Categorías" className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 lg:-mx-8 lg:px-8">
+        <div role="tablist" aria-label="Categorías" className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 lg:mx-0 lg:flex-wrap lg:overflow-visible lg:px-0">
           {[TU_CANASTA, ...categorias].map((c) => {
             const activa = c === categoria;
             return (
