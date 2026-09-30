@@ -8,12 +8,21 @@ cada una. Última revisión: 30/09/2026.
 ### SIPC – Sistema de Información de Precios al Consumidor (Uruguay)
 
 - Responsable: Unidad de Defensa del Consumidor (MEF). Contacto: equiposipc@consumidor.gub.uy
-- Dataset 2025: https://catalogodatos.gub.uy/dataset/defensa-del-consumidor-sistema-de-informacion-de-precios-al-consumidor-2025
+- **Dataset 2026** (precios del 01/01 al 30/06/2026, 1 GB, actualizado el 17/07/2026; todavía
+  no cargado): https://catalogodatos.gub.uy/dataset/defensa-del-consumidor-sistema-de-informacion-de-precios-al-consumidor-2026
+  - Precios: https://catalogodatos.gub.uy/dataset/c2edcd30-8a99-45da-b208-b76056de430e/resource/8226cb72-6ff0-4ed5-84a4-6eb7ee3be208/download/precios_2026.csv
+  - Productos: https://catalogodatos.gub.uy/dataset/c2edcd30-8a99-45da-b208-b76056de430e/resource/03e4e104-5a4a-4597-988f-7ba6df749ff8/download/productos.csv
+  - Establecimientos: https://catalogodatos.gub.uy/dataset/c2edcd30-8a99-45da-b208-b76056de430e/resource/26a1743a-2a63-4712-a220-a5a19879e748/download/establecimiento.csv
+- Dataset 2025 (el que está cargado): https://catalogodatos.gub.uy/dataset/defensa-del-consumidor-sistema-de-informacion-de-precios-al-consumidor-2025
+- Datasets 2024 y 2023: https://catalogodatos.gub.uy/dataset/defensa-del-consumidor-sistema-de-informacion-de-precios-al-consumidor-2024
+  y https://catalogodatos.gub.uy/dataset/defensa-del-consumidor-sistema-de-informacion-de-precios-al-consumidor-2023
+- Lección: el listado por etiqueta del catálogo no muestra todos los años; buscar con la API
+  (`/api/3/action/package_search?q=sistema+informacion+precios+consumidor`).
 - Histórico 2007–2022: https://catalogodatos.gub.uy/dataset/declaraciones-al-sistema-de-informacion-de-precios-al-consumidor-2019
 - Listado de datasets de precios: https://catalogodatos.gub.uy/dataset/?tags=Precios
 - Sitio y app con precios actuales (sin API ni descarga): https://precios.uy
 - Licencia: Licencia de Datos Abiertos del Uruguay (DAG).
-- Frecuencia: un archivo de precios por año, actualizado cada trimestre. Último dato: 31/12/2025.
+- Frecuencia: un archivo de precios por año, actualizado cada trimestre (el de 2026 llega al 30/06/2026).
 
 Archivos que usa `pipelines/fuentes/sipc.py`:
 
@@ -27,10 +36,21 @@ Archivos que usa `pipelines/fuentes/sipc.py`:
 | Metadatos de establecimientos | https://catalogodatos.gub.uy/dataset/35d8f45e-2aa7-48b5-98dd-f973b05cf8ba/resource/25c81cc0-0d51-4161-a393-bd1ed3120dc8/download/metadatos-establecimientos.csv |
 | Nota metodológica (ODT) | https://catalogodatos.gub.uy/dataset/35d8f45e-2aa7-48b5-98dd-f973b05cf8ba/resource/8ef6a15b-a9ce-4deb-9eae-bcf797752b7a/download/documentacion-bases-de-datos.odt |
 
+### Límites de Uruguay y sus departamentos
+
+- geoBoundaries (a partir de OpenStreetMap, licencia ODbL), versión simplificada, coordenadas
+  redondeadas a 4 decimales: `web/public/geo/uruguay.geojson` y `web/public/geo/departamentos.geojson`.
+  - https://www.geoboundaries.org/api/current/gbOpen/URY/ADM0/
+  - https://www.geoboundaries.org/api/current/gbOpen/URY/ADM1/
+
+### Tickets electrónicos (CFE de la DGI)
+
+- El QR es un enlace `https://www.efactura.dgi.gub.uy/consultaQR/cfe?RUC,tipo,serie,número,monto,fecha,código`
+  (fecha dd/mm/aaaa; tipo 101 = e-Ticket, 111 = e-Factura). **Trae el comercio (RUC), la fecha
+  y el total, pero no los productos ni datos de quien compra.** Lo lee `web/src/lib/qrDgi.ts`.
+
 ## Para más adelante (Uruguay)
 
-- **Tickets electrónicos (CFE) de la DGI:** los tickets uruguayos traen un QR de la DGI.
-  Falta investigar si permite obtener los ítems o solo el total. https://www.gub.uy/direccion-general-impositiva
 - **Open Food Facts** (productos por código de barras, nombre, marca y tamaño; licencia ODbL):
   https://world.openfoodfacts.org — útil si los tickets traen EAN.
 - **Open Prices** (precios colaborativos de Open Food Facts, con API): https://prices.openfoodfacts.org

@@ -4,6 +4,7 @@ import { Canasta } from "./components/Canasta";
 import { Encabezado } from "./components/Encabezado";
 import { Resultados } from "./components/Resultados";
 import { Resumen } from "./components/Resumen";
+import { SumarTicket } from "./components/SumarTicket";
 import { PUNTO_EN_EL_MAPA, Ubicacion } from "./components/Ubicacion";
 import { api, type Ciudad, type Comercio, type Generico } from "./lib/api";
 import { useCotizacion } from "./hooks/useCotizacion";
@@ -72,6 +73,7 @@ export default function App() {
         <Suspense fallback={<div className="h-full w-full bg-fondo" />}>
           <Mapa
             centro={ubicacion}
+            departamento={ubicacion?.departamento || null}
             radioKm={radioKm}
             comercios={comercios}
             resultados={cotizacion.resultados}
@@ -86,7 +88,7 @@ export default function App() {
           className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-linear-to-t from-[rgb(20_32_27_/_0.14)] to-transparent lg:inset-x-auto lg:inset-y-0 lg:right-0 lg:h-auto lg:w-10 lg:bg-linear-to-l"
         />
       </section>
-      <aside className="panel-cortado relative -mt-5 flex flex-col gap-8 bg-panel px-5 pt-8 pb-16 lg:z-10 lg:mt-0 lg:-ml-2 lg:overflow-y-auto lg:px-8 lg:pt-10 lg:pl-10">
+      <aside className="panel-cortado papel-libreta relative -mt-5 flex flex-col gap-8 px-5 pt-8 pb-16 lg:z-10 lg:mt-0 lg:-ml-2 lg:overflow-y-auto lg:px-8 lg:pt-10 lg:pl-10">
         <Encabezado
           ultimoPrecio={ultimoPrecio}
           comercios={ciudades.reduce((total, c) => total + c.comercios, 0)}
@@ -127,6 +129,7 @@ export default function App() {
           onAmpliar={() => setRadio(Math.min(radioKm + 5, 20))}
           onReintentar={cotizacion.reintentar}
         />
+        <SumarTicket />
         <Resumen mejor={cotizacion.fase === "listo" ? cotizacion.resultados[0] : undefined} />
       </aside>
     </div>

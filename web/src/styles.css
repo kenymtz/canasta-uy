@@ -230,3 +230,22 @@ body::after {
     }
   }
 }
+
+/* Textura del panel: la libreta cuadriculada del almacén de barrio, donde se anota lo que
+   se lleva "fiado". Solo CSS, sin imágenes; "local" hace que se desplace con el contenido. */
+.papel-libreta {
+  --cuadricula: rgb(22 122 79 / 0.075);
+  background-color: var(--color-panel);
+  background-image:
+    linear-gradient(var(--cuadricula) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cuadricula) 1px, transparent 1px);
+  background-size: 22px 22px;
+  background-position: -1px -1px;
+  background-attachment: local;
+}
+
+@media (prefers-color-scheme: dark) {
+  .papel-libreta {
+    --cuadricula: rgb(228 235 232 / 0.045);
+  }
+}

@@ -9,6 +9,8 @@ import {
 import urlWorker from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import { useEffect, useRef, useState } from "react";
 
+import type { FeatureCollection, Polygon } from "geojson";
+
 import type { Comercio, ResultadoComercio } from "../lib/api";
 import { formatoPlata } from "../lib/formato";
 import { circulo, limitesCirculo } from "../lib/geo";
@@ -34,8 +36,32 @@ const LIMITES_URUGUAY: [[number, number], [number, number]] = [
 ];
 const MAX_ETIQUETAS = 15; // con más, el mapa se vuelve ilegible
 
+// Contorno de Uruguay y de sus 19 departamentos (geoBoundaries, a partir de OpenStreetMap,
+// licencia ODbL), guardados en web/public/geo. Con el contorno se arma una "máscara": el
+// mundo entero con un agujero con la forma de Uruguay, para oscurecer lo que queda afuera.
+const MASCARA = fetch("/geo/uruguay.geojson")
+  .then((r) => r.json())
+  .then((pais: FeatureCollection<Polygon>) => ({
+    type: "Feature" as const,
+    properties: {},
+    geometry: {
+      type: "Polygon" as const,
+      coordinates: [
+        [
+          [-180, -85],
+          [180, -85],
+          [180, 85],
+          [-180, 85],
+          [-180, -85],
+        ],
+        pais.features[0].geometry.coordinates[0],
+      ],
+    },
+  }));
+
 interface Props {
   centro: { lat: number; lon: number } | null;
+  departamento: string | null;
   radioKm: number;
   comercios: Comercio[];
   resultados: ResultadoComercio[];
@@ -53,8 +79,69 @@ const token = (nombre: string) =>
 function prepararEstilo(mapa: MapaML) {
   for (const capa of mapa.getStyle().layers) {
     if (capa.type === "background") mapa.setPaintProperty(capa.id, "background-color", token("--color-fondo"));
+    // Los límites del mapa base son grises y punteados; se reemplazan por los propios
+    if (capa.id.startsWith("boundary")) mapa.setLayoutProperty(capa.id, "visibility", "none");
   }
   const acento = token("--color-acento");
+
+  if (!mapa.getSource("mascara")) {
+    mapa.addSource("mascara", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+    mapa.addLayer({
+      id: "fuera-de-uruguay",
+      type: "fill",
+      source: "mascara",
+      // Fuerte en la vista de país; se desvanece al acercarse a una ciudad, donde el contorno
+      // simplificado ya no coincide exactamente con la costa o el río
+      paint: {
+        "fill-color": token("--color-fondo"),
+        "fill-opacity": ["interpolate", ["linear"], ["zoom"], 6, oscuro() ? 0.8 : 0.72, 9, 0.45, 11, 0],
+      },
+    });
+    MASCARA.then((m) => mapa.getSource<GeoJSONSource>("mascara")?.setData(m));
+  }
+  if (!mapa.getSource("departamentos")) {
+    mapa.addSource("departamentos", { type: "geojson", data: "/geo/departamentos.geojson" });
+    mapa.addSource("uruguay", { type: "geojson", data: "/geo/uruguay.geojson" });
+    // El departamento elegido se tiñe; el filtro se actualiza desde el componente
+    mapa.addLayer({
+      id: "departamento-elegido",
+      type: "fill",
+      source: "departamentos",
+      filter: ["==", ["get", "nombre"], ""],
+      paint: { "fill-color": acento, "fill-opacity": ["interpolate", ["linear"], ["zoom"], 6, 0.12, 11, 0.04] },
+    });
+    mapa.addLayer({
+      id: "limites-departamentos",
+      type: "line",
+      source: "departamentos",
+      paint: {
+        "line-color": token("--color-tinta-suave"),
+        "line-opacity": ["interpolate", ["linear"], ["zoom"], 6, 0.6, 10, 0.3, 12, 0],
+        "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.9, 10, 1.6],
+      },
+    });
+    mapa.addLayer({
+      id: "limite-elegido",
+      type: "line",
+      source: "departamentos",
+      filter: ["==", ["get", "nombre"], ""],
+      paint: {
+        "line-color": acento,
+        "line-opacity": ["interpolate", ["linear"], ["zoom"], 9, 1, 12, 0],
+        "line-width": ["interpolate", ["linear"], ["zoom"], 5, 1.5, 10, 2.5],
+      },
+    });
+    mapa.addLayer({
+      id: "limite-uruguay",
+      type: "line",
+      source: "uruguay",
+      paint: {
+        "line-color": token("--color-tinta"),
+        "line-opacity": ["interpolate", ["linear"], ["zoom"], 6, 0.75, 10, 0.3, 12, 0],
+        "line-width": ["interpolate", ["linear"], ["zoom"], 5, 1.3, 10, 2.2],
+      },
+    });
+  }
   if (!mapa.getSource("radio")) {
     mapa.addSource("radio", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
     mapa.addLayer({ id: "radio-relleno", type: "fill", source: "radio", paint: { "fill-color": acento, "fill-opacity": 0.05 } });
@@ -100,7 +187,7 @@ function evitarSolapes(etiquetas: Marker[]) {
   }
 }
 
-export function Mapa({ centro, radioKm, comercios, resultados, seleccionado, onSeleccionar, onElegirPunto }: Props) {
+export function Mapa({ centro, departamento, radioKm, comercios, resultados, seleccionado, onSeleccionar, onElegirPunto }: Props) {
   const contenedor = useRef<HTMLDivElement>(null);
   const mapa = useRef<MapaML | null>(null);
   // Sube cada vez que el estilo termina de cargar (también tras un cambio de tema), para que
@@ -125,7 +212,10 @@ export function Mapa({ centro, radioKm, comercios, resultados, seleccionado, onS
     });
     m.addControl(new NavigationControl({ showCompass: false }), "top-right");
     // Arriba: en el celular, el panel tapa la parte de abajo del mapa
-    m.addControl(new AttributionControl({ compact: true }), "top-left");
+    m.addControl(
+      new AttributionControl({ compact: true, customAttribution: "Límites: geoBoundaries (ODbL)" }),
+      "top-left",
+    );
     m.on("style.load", () => {
       prepararEstilo(m);
       setListo((n) => n + 1);
@@ -171,6 +261,15 @@ export function Mapa({ centro, radioKm, comercios, resultados, seleccionado, onS
       duration: sinMovimiento() ? 0 : 700,
     });
   }, [centro, radioKm, listo]);
+
+  // Resaltar el departamento elegido
+  useEffect(() => {
+    const m = mapa.current;
+    if (!m || !listo) return;
+    const filtro: ["==", ["get", string], string] = ["==", ["get", "nombre"], departamento ?? ""];
+    m.setFilter("departamento-elegido", filtro);
+    m.setFilter("limite-elegido", filtro);
+  }, [departamento, listo]);
 
   // Comercios cercanos como puntos chicos
   useEffect(() => {
