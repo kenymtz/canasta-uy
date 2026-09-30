@@ -1,7 +1,37 @@
 # Contexto del proyecto (traspaso)
 
 Documento para retomar el proyecto en una conversación nueva.
-Última actualización: 29/09/2026.
+Última actualización: 30/09/2026.
+
+## ⭐ Objetivo actual (redefinido por Augusto el 30/09/2026)
+
+**Una web (adaptable al celular) para hacer las compras al menor costo, solo en Uruguay.**
+
+1. El usuario pone su **presupuesto**, elige en un **mapa interactivo** su departamento y
+   ciudad, y arma su canasta con **productos genéricos, sin marca, por categoría**
+   ("aceite de girasol", "arroz").
+2. La web le muestra **los comercios más convenientes** para esa canasta.
+3. Puede **subir su ticket** (QR o foto) y ver **qué tan buena fue su compra** comparada con
+   la anterior. Los datos se guardan **por usuario**.
+
+Decisiones:
+- **Solo Uruguay.** Argentina y Brasil quedan fuera: a Augusto le preocupa que el proyecto
+  parezca incentivar el contrabando. Lo ya hecho de PTAX y de SEPA (ver "Hallazgos de SEPA")
+  queda documentado pero no se sigue.
+- **Web y no app nativa ni bot:** para el portafolio, un link que se abre con un clic pesa
+  más; muestra el recorrido completo pipelines → base → API → interfaz. Stack propuesto:
+  FastAPI + Leaflet/OpenStreetMap.
+- El campo `producto` del SIPC ("Aceite de girasol") ya es la categoría genérica sin marca.
+- Limitación a mostrar en la web: los precios del SIPC llegan al 31/12/2025.
+- Tickets en Uruguay: son **CFE** de la DGI (no NFC-e, que es de Brasil). Falta investigar si
+  el QR permite obtener los ítems o solo el total; si no, foto + extracción con IA.
+
+Limpieza del 30/09/2026: se borraron los archivos de SEPA (1,7 GB), las cotizaciones PTAX
+de la base y el espacio muerto de `core.precio` (la base pasó de 9 a 6 GB). Todos los enlaces
+de las fuentes, usadas y descartadas, están en [`FUENTES.md`](FUENTES.md).
+
+Las secciones siguientes cuentan la idea anterior ("Precios de Frontera"); la
+infraestructura y el SIPC siguen valiendo, la parte de frontera no.
 
 ## Quién y para qué
 
@@ -20,7 +50,7 @@ Documento para retomar el proyecto en una conversación nueva.
 3. **Ampliación a la frontera:** el foco pasó a las ciudades de frontera seca o con
    puente, donde la gente cruza a comprar y decide "a ojo".
 
-## Idea final
+## Idea anterior (reemplazada el 30/09/2026)
 
 **"Precios de Frontera": ¿conviene cruzar a comprar?** Un comparador de precios entre
 Uruguay y sus ciudades vecinas de Brasil y Argentina, sobre datos abiertos oficiales,
@@ -82,7 +112,10 @@ Pares de ciudades:
 ## Qué está hecho
 
 Repo local en `C:\Users\valla\projects\precios-frontera` (rama `main`), publicado en
-GitHub como repositorio público: https://github.com/kenymtz/precios-frontera
+GitHub como repositorio público: https://github.com/kenymtz/canasta-uy (renombrado el
+30/09/2026; antes `precios-frontera`, los links viejos redirigen). La carpeta local, el proyecto
+de Docker Compose (`name: precios-frontera`) y el volumen `pf_pgdata` conservan el nombre viejo:
+cambiar el `name` del compose crearía un volumen nuevo y vacío.
 
 - `docker-compose.yml`: Postgres 17 + PostGIS + pgvector (puerto **5433**, solo en
   127.0.0.1), Metabase (puerto **3000**), n8n opcional con `--profile n8n` (puerto **5679**),
@@ -177,22 +210,45 @@ cubrir con tickets).
 
 Otras fuentes evaluadas:
 - precios.uy / app PreciosGub muestran precios actuales; el sitio ofrece "Solicitud de base de
-  datos" (equiposipc@consumidor.gub.uy). Pendiente: pedir datos más recientes.
+  datos" (equiposipc@consumidor.gub.uy). Decisión de Augusto (30/09/2026): no contactarlos;
+  se trabaja con el archivo abierto aunque tenga atraso.
 - Open Prices (Open Food Facts): abierta y con API, pero casi todo es de Europa.
 - **Open Food Facts (productos)**: EAN → nombre, marca y tamaño en varios idiomas; útil para el matching.
 - Scraping de tiendas online: descartado (términos de uso, fragilidad, portafolio público y,
   sobre todo, no cubre los comercios de frontera, que es lo que falta).
 
+### Hallazgos de SEPA (30/09/2026)
+
+- `datos.produccion.gob.ar` responde **403** desde Uruguay, tanto a `curl` como al navegador de
+  Augusto (otros proyectos documentan que bloquea IPs de datacenter; desde Argentina, conexión
+  doméstica, funciona). No se intenta esquivar el bloqueo.
+- El portal publica un ZIP por día de la semana que se pisa cada semana: **no guarda historia**.
+  La copia en datos.gob.ar está desactualizada (julio 2026); el portal real se actualiza a diario.
+- **Archivo histórico:** el proyecto [preciazo](https://github.com/catdevnull/preciazo) guarda
+  todos los días de SEPA desde el 19/08/2024 en un bucket público de Backblaze; el índice está en
+  [catdevnull/sepa-precios-metadata](https://github.com/catdevnull/sepa-precios-metadata)
+  (`index.md`/`index.json`). 765 días, 691 descargables, formato `.tar.zst` (reempaquetado).
+  Incluye el **31/12/2025** (69 MB), el mismo último día que el SIPC: permite comparar en la
+  **misma fecha** sin ajustar por inflación. La licencia CC BY 4.0 de SEPA permite redistribuir;
+  hay que citar a la Secretaría de Comercio como fuente y a preciazo como archivo.
+
 ## Próximos pasos
 
-1. Escribir al equipo del SIPC para pedir datos más recientes que el 31/12/2025.
-2. Agregar `es_oferta` a `mart.precio_comparable` y guardar el reporte de calidad de cada
-   carga en una tabla (hoy solo se imprime).
-3. SEPA (Argentina): explorar, `raw.sepa_*`, pipeline.
-4. Pipelines de cambio BCU y BCRA.
-5. Catálogo canónico y matching (EAN/Open Food Facts → reglas → embeddings) + set de evaluación.
-6. NFC-e por QR (Brasil), tickets por foto, recomendador con PostGIS, bot de WhatsApp,
-   dashboard en Metabase.
+Para el objetivo actual (web de compras al menor costo en Uruguay):
+
+1. **Categorías genéricas:** `core.producto_canonico` a partir del `tipo` del SIPC, con
+   precio comparable por unidad base (kg, l, unidad) para mezclar tamaños y marcas.
+2. **Capa mart para la web:** último precio de cada categoría en cada comercio, y la consulta
+   de "canasta": costo total por comercio (y quizá combinando 2 comercios cercanos), cobertura
+   de la canasta y si entra en el presupuesto.
+3. **API (FastAPI):** departamentos y ciudades, categorías, cotizar una canasta.
+4. **Web:** mapa (Leaflet + OpenStreetMap) para elegir la ubicación, armar la canasta y ver
+   los resultados.
+5. **Usuarios y tickets:** cuentas, subir el ticket (investigar el QR del CFE de la DGI;
+   si no alcanza, foto + extracción con IA), comparar con la compra anterior.
+6. Calidad: guardar el reporte de cada carga en una tabla. Despliegue en un VPS.
+
+Fuera de alcance por ahora: SEPA, tipos de cambio (PTAX/BCU/BCRA), NFC-e de Brasil.
 
 ## Entorno disponible
 

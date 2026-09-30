@@ -43,7 +43,8 @@ SELECT
         4
     )                   AS usd_por_unidad_base,
     m.metodo            AS metodo_match,
-    m.confianza         AS confianza_match
+    m.confianza         AS confianza_match,
+    p.es_oferta
 FROM core.precio p
 JOIN core.establecimiento   e  ON e.id  = p.establecimiento_id
 JOIN core.producto_fuente   pf ON pf.id = p.producto_fuente_id

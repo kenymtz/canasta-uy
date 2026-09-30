@@ -1,8 +1,8 @@
-# Precios de Frontera — infraestructura local
+# Canasta UY — infraestructura local
 #
 #   docker compose up -d                 → Postgres (PostGIS + pgvector) + Metabase
 #   docker compose --profile n8n up -d   → además levanta un n8n propio del proyecto
-#   docker compose run --rm pipelines python -m pipelines.cambio.bcb_ptax --dias 30
+#   docker compose run --rm pipelines python -m pipelines.fuentes.sipc
 #   docker compose --profile jupyter up -d   → Jupyter Lab con el mismo entorno
 #
 # Si ya tenés un n8n corriendo aparte, no uses el perfil "n8n": conectalo a la base
