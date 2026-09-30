@@ -24,17 +24,18 @@ CREATE TABLE raw.sipc_establecimientos (
     razon_social        text,
     nombre_sucursal     text,
     direccion           text,
-    ccz                 integer,    -- centro comunal zonal (solo Montevideo)
+    ccz                 text,       -- centro comunal zonal (solo Montevideo)
     barrio              text,
-    cajas               integer,
+    cajas               text,
     cadena              text,
     long                text,       -- ¡OJO! trae la LATITUD, con coma decimal ("-34,87")
     lat                 text,       -- ¡OJO! trae la LONGITUD, con coma decimal ("-56,18")
     ciudad              text,
     depto               text,
-    id_depto            integer,
-    localidad           integer,
-    superficie_m2       integer
+    id_depto            text,
+    localidad           text,
+    -- text: desde 2026 los vacíos vienen como la palabra NULL
+    superficie_m2       text
 );
 
 -- precios_AAAA.csv: una fila = el precio de un producto, en un comercio, en un día

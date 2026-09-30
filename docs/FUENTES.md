@@ -8,12 +8,12 @@ cada una. Última revisión: 30/09/2026.
 ### SIPC – Sistema de Información de Precios al Consumidor (Uruguay)
 
 - Responsable: Unidad de Defensa del Consumidor (MEF). Contacto: equiposipc@consumidor.gub.uy
-- **Dataset 2026** (precios del 01/01 al 30/06/2026, 1 GB, actualizado el 17/07/2026; todavía
-  no cargado): https://catalogodatos.gub.uy/dataset/defensa-del-consumidor-sistema-de-informacion-de-precios-al-consumidor-2026
+- **Dataset 2026** (precios del 01/01 al 30/06/2026, 1 GB, actualizado el 17/07/2026; cargado
+  junto con 2025, sus catálogos son los que usa el pipeline): https://catalogodatos.gub.uy/dataset/defensa-del-consumidor-sistema-de-informacion-de-precios-al-consumidor-2026
   - Precios: https://catalogodatos.gub.uy/dataset/c2edcd30-8a99-45da-b208-b76056de430e/resource/8226cb72-6ff0-4ed5-84a4-6eb7ee3be208/download/precios_2026.csv
   - Productos: https://catalogodatos.gub.uy/dataset/c2edcd30-8a99-45da-b208-b76056de430e/resource/03e4e104-5a4a-4597-988f-7ba6df749ff8/download/productos.csv
   - Establecimientos: https://catalogodatos.gub.uy/dataset/c2edcd30-8a99-45da-b208-b76056de430e/resource/26a1743a-2a63-4712-a220-a5a19879e748/download/establecimiento.csv
-- Dataset 2025 (el que está cargado): https://catalogodatos.gub.uy/dataset/defensa-del-consumidor-sistema-de-informacion-de-precios-al-consumidor-2025
+- Dataset 2025 (cargado): https://catalogodatos.gub.uy/dataset/defensa-del-consumidor-sistema-de-informacion-de-precios-al-consumidor-2025
 - Datasets 2024 y 2023: https://catalogodatos.gub.uy/dataset/defensa-del-consumidor-sistema-de-informacion-de-precios-al-consumidor-2024
   y https://catalogodatos.gub.uy/dataset/defensa-del-consumidor-sistema-de-informacion-de-precios-al-consumidor-2023
 - Lección: el listado por etiqueta del catálogo no muestra todos los años; buscar con la API

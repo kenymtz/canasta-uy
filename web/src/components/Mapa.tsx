@@ -216,6 +216,9 @@ export function Mapa({ centro, departamento, radioKm, comercios, resultados, sel
       new AttributionControl({ compact: true, customAttribution: "Límites: geoBoundaries (ODbL)" }),
       "top-left",
     );
+    // Los créditos arrancan desplegados y en el celular tapan el zoom: se muestran plegados
+    // (siguen a un toque en el ícono de información)
+    m.once("load", () => contenedor.current?.querySelector(".maplibregl-ctrl-attrib")?.classList.remove("maplibregl-compact-show"));
     m.on("style.load", () => {
       prepararEstilo(m);
       setListo((n) => n + 1);

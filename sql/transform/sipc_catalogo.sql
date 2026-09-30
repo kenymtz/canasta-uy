@@ -200,6 +200,7 @@ INSERT INTO correspondencia (tipo_sipc, generico, categoria) VALUES
     ('Hojas',                           'Hojas',                    'Útiles escolares'),
     ('Hojas cuadriculadas',             'Hojas cuadriculadas',      'Útiles escolares'),
     ('Hojas de Garbanzo',               'Hojas de garbanzo',        'Útiles escolares'),
+    ('Hojas de Blancas',                'Hojas blancas',            'Útiles escolares'),  -- nombre de 2026
     ('Juego de Geometría',              'Juego de geometría',       'Útiles escolares'),
     ('Lápices de colores',              'Lápices de colores',       'Útiles escolares'),
     ('Lápiz Corrector',                 'Corrector',                'Útiles escolares'),

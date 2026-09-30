@@ -10,12 +10,25 @@ SET LOCAL work_mem = '256MB';
 
 -- 1. Comercios ────────────────────────────────────────────────────────────────
 
+-- Texto de coordenada del SIPC → número. Viene con coma decimal ("-34,8765665"), pero algunos
+-- comercios de 2026 pasaron por Excel y perdieron la coma: "-348576993" se recupera (en
+-- Uruguay latitud y longitud tienen siempre 2 dígitos enteros), mientras que "-3,34E+15"
+-- ya perdió precisión (quedan 3 cifras, ~11 km) y se descarta.
+CREATE OR REPLACE FUNCTION core.coordenada_sipc(texto text) RETURNS numeric
+LANGUAGE sql IMMUTABLE AS $$
+    SELECT CASE
+        WHEN t ~* 'e' THEN NULL
+        WHEN t ~ '^-?\d{7,}$' THEN (left(t, strpos(t, '-') + 2) || '.' || substr(t, strpos(t, '-') + 3))::numeric
+        WHEN t ~ '^-?\d+([.,]\d+)?$' THEN replace(t, ',', '.')::numeric
+    END
+    FROM (SELECT nullif(trim(texto), '') AS t) x
+$$;
+
 WITH coordenadas AS (
     SELECT e.*,
            -- Los nombres vienen cruzados: la columna "long" trae la latitud y "lat" la longitud.
-           -- Además usan coma decimal.
-           replace(nullif(trim(e.long), ''), ',', '.')::numeric AS latitud,
-           replace(nullif(trim(e.lat),  ''), ',', '.')::numeric AS longitud
+           core.coordenada_sipc(e.long) AS latitud,
+           core.coordenada_sipc(e.lat)  AS longitud
     FROM raw.sipc_establecimientos e
 ),
 corregidas AS (
@@ -23,6 +36,24 @@ corregidas AS (
            -- Uruguay está entero en el hemisferio sur: una latitud positiva es un signo perdido
            CASE WHEN c.latitud > 0 THEN -c.latitud ELSE c.latitud END AS latitud_ok
     FROM coordenadas c
+),
+-- Los nombres vienen con variantes ("CANELONES", "Piriapolis" / "Piriápolis"). Departamentos:
+-- se comparan contra la lista oficial; ciudades: se unifican en la forma más usada.
+departamentos (nombre) AS (
+    VALUES ('Artigas'), ('Canelones'), ('Cerro Largo'), ('Colonia'), ('Durazno'), ('Flores'),
+           ('Florida'), ('Lavalleja'), ('Maldonado'), ('Montevideo'), ('Paysandú'), ('Río Negro'),
+           ('Rivera'), ('Rocha'), ('Salto'), ('San José'), ('Soriano'), ('Tacuarembó'), ('Treinta y Tres')
+),
+ciudades AS (
+    -- La mejor escrita: con tildes y con más mayúsculas ("Paso de los Toros" antes que
+    -- "Paso de los toros", aunque esta aparezca más veces); la frecuencia solo desempata
+    SELECT DISTINCT ON (clave) clave, nombre
+    FROM (
+        SELECT lower(unaccent(trim(ciudad))) AS clave, trim(ciudad) AS nombre, count(*) AS n
+        FROM raw.sipc_establecimientos
+        GROUP BY 1, 2
+    ) variantes
+    ORDER BY clave, (nombre <> unaccent(nombre)) DESC, length(regexp_replace(nombre, '[^[:upper:]]', '', 'g')) DESC, n DESC
 )
 INSERT INTO core.establecimiento
     (fuente_id, id_externo, pais, nombre, cadena, direccion, ciudad, departamento,
@@ -35,8 +66,8 @@ SELECT
     trim(c.nombre_sucursal),
     nullif(trim(c.cadena), 'Sin Cadena'),           -- "Sin Cadena" significa que no tiene
     trim(c.direccion),
-    trim(c.ciudad),
-    trim(c.depto),
+    coalesce(ci.nombre, trim(c.ciudad)),
+    coalesce(d.nombre, trim(c.depto)),
     -- Solo se guarda la ubicación si cae dentro del rectángulo de Uruguay; si no (por ejemplo,
     -- el comercio geocodificado en Ezeiza), queda NULL: mejor sin ubicación que una falsa.
     CASE WHEN c.latitud_ok BETWEEN -35.1 AND -30.0 AND c.longitud BETWEEN -58.5 AND -53.0
@@ -45,6 +76,8 @@ SELECT
     now()
 FROM corregidas c
 CROSS JOIN (SELECT id FROM core.fuente WHERE codigo = 'sipc') f
+LEFT JOIN departamentos d ON lower(unaccent(d.nombre)) = lower(unaccent(trim(c.depto)))
+LEFT JOIN ciudades ci     ON ci.clave = lower(unaccent(trim(c.ciudad)))
 ON CONFLICT (fuente_id, id_externo) DO UPDATE SET
     nombre         = EXCLUDED.nombre,
     cadena         = EXCLUDED.cadena,

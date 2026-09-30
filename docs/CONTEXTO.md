@@ -22,7 +22,7 @@ Decisiones:
   más; muestra el recorrido completo pipelines → base → API → interfaz. Stack propuesto:
   FastAPI + Leaflet/OpenStreetMap.
 - El campo `producto` del SIPC ("Aceite de girasol") ya es la categoría genérica sin marca.
-- Limitación a mostrar en la web: los precios del SIPC llegan al 31/12/2025.
+- La web muestra la fecha de los precios (hoy, del SIPC 2026: hasta el 30/06/2026).
 - Tickets en Uruguay: son **CFE** de la DGI (no NFC-e, que es de Brasil). Falta investigar si
   el QR permite obtener los ítems o solo el total; si no, foto + extracción con IA.
 
@@ -231,6 +231,22 @@ Otras fuentes evaluadas:
   Incluye el **31/12/2025** (69 MB), el mismo último día que el SIPC: permite comparar en la
   **misma fecha** sin ajustar por inflación. La licencia CC BY 4.0 de SEPA permite redistribuir;
   hay que citar a la Secretaría de Comercio como fuente y a preciazo como archivo.
+
+### SIPC 2026 cargado (30/09/2026)
+
+- El pipeline carga ahora **2025 y 2026** (precios hasta el **30/06/2026**): 40.315.906 filas en
+  raw, 40.163.889 en core (−189 huérfanos, −151.828 duplicados), 893 comercios (41 nuevos), base
+  de 12 GB. La web muestra precios del 31/05 al 30/06/2026. Los catálogos se toman de 2026.
+- Cambios de formato de 2026: los vacíos del archivo de comercios vienen como la palabra `NULL`
+  (se resuelve con `NULL 'NULL'` en el COPY; `ccz`, `cajas`, `id_depto`, `localidad` y
+  `superficie_m2` pasaron a text en raw). Las coordenadas siguen cruzadas.
+- **Coordenadas dañadas por Excel** en 9 comercios nuevos: `-3,34E+15` (irrecuperable, se
+  descarta) o `-348576993` (se recupera: 2 dígitos enteros). Función `core.coordenada_sipc`.
+  Quedan 12 comercios sin ubicación.
+- Un tipo cambió de nombre en 2026 ("Hojas de Blancas"); se agregó a la correspondencia.
+- Nombres con variantes en 2026 ("CANELONES", "MALDONADO", "Paso de los toros", "Piriapolis"):
+  los departamentos se comparan contra la lista oficial de 19 y las ciudades se unifican en la
+  variante mejor escrita (con tildes y mayúsculas), sin distinguir mayúsculas ni tildes.
 
 ## Próximos pasos
 

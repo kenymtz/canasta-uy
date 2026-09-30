@@ -1,8 +1,9 @@
 """Descarga los archivos del SIPC (Uruguay), los carga en raw y los pasa a core.
 
-Fuente: catálogo de datos abiertos, dataset "Sistema de Información de Precios al
-Consumidor - 2025" (Defensa del Consumidor). Hay un archivo de precios por año, que se
-actualiza cada trimestre, y dos catálogos: productos y comercios.
+Fuente: catálogo de datos abiertos, datasets "Sistema de Información de Precios al
+Consumidor" de 2025 y 2026 (Defensa del Consumidor). Hay un archivo de precios por año, que
+se actualiza cada trimestre, y dos catálogos: productos y comercios. Los catálogos se toman
+del año más reciente, que incluye todo lo de los anteriores.
 Destino: raw.sipc_* (tal cual vienen), después core.establecimiento,
 core.producto_fuente y core.precio (limpios; ver sql/transform/sipc_core.sql) y por
 último el catálogo de productos genéricos (ver sql/transform/sipc_catalogo.sql) y el
@@ -26,30 +27,36 @@ import requests
 DESTINO = Path("data/raw/sipc")
 TRANSFORMACION = Path("sql/transform/sipc_core.sql")
 CATALOGO = Path("sql/transform/sipc_catalogo.sql")
-DATASET = "https://catalogodatos.gub.uy/dataset/35d8f45e-2aa7-48b5-98dd-f973b05cf8ba/resource"
+SIPC_2025 = "https://catalogodatos.gub.uy/dataset/35d8f45e-2aa7-48b5-98dd-f973b05cf8ba/resource"
+SIPC_2026 = "https://catalogodatos.gub.uy/dataset/c2edcd30-8a99-45da-b208-b76056de430e/resource"
 
 # El encabezado esperado funciona como contrato: si la fuente cambia columnas u orden,
 # el pipeline se detiene en lugar de cargar datos corridos de lugar.
 RECURSOS = {
     "productos": {
-        "url": f"{DATASET}/ed042b97-12ce-46ff-a169-b2594337a6e4/download/productos.csv",
+        "urls": [f"{SIPC_2026}/03e4e104-5a4a-4597-988f-7ba6df749ff8/download/productos.csv"],
         "encoding": "latin-1",
         "encabezado": "id.producto;producto;marca;especificacion;nombre",
         "tabla": "raw.sipc_productos",
         "opciones": "FORMAT csv, DELIMITER ';', HEADER true, ENCODING 'LATIN1'",
     },
     "establecimientos": {
-        "url": f"{DATASET}/5fbdd7e8-97fa-44db-b978-4381670c8933/download/establecimiento.csv",
+        "urls": [f"{SIPC_2026}/26a1743a-2a63-4712-a220-a5a19879e748/download/establecimiento.csv"],
         "encoding": "latin-1",
         "encabezado": (
             "id.establecimientos;razon.social;nombre.sucursal;direccion;ccz;barrio;cajas;"
             "cadena;long;lat;ciudad;depto;id.depto;localidad;superficie (m2)"
         ),
         "tabla": "raw.sipc_establecimientos",
-        "opciones": "FORMAT csv, DELIMITER ';', HEADER true, ENCODING 'LATIN1'",
+        # Desde 2026 los datos faltantes vienen como la palabra NULL (en 2025, vacíos)
+        "opciones": "FORMAT csv, DELIMITER ';', HEADER true, ENCODING 'LATIN1', NULL 'NULL'",
     },
     "precios": {
-        "url": f"{DATASET}/36c62bab-b7e4-4c9e-ad9b-4c1182090a22/download/precios_2025.csv",
+        # Un archivo por año; se cargan todos juntos en la misma tabla
+        "urls": [
+            f"{SIPC_2025}/36c62bab-b7e4-4c9e-ad9b-4c1182090a22/download/precios_2025.csv",
+            f"{SIPC_2026}/8226cb72-6ff0-4ed5-84a4-6eb7ee3be208/download/precios_2026.csv",
+        ],
         "encoding": "ascii",
         "encabezado": (
             '"ID_PrecioDiario","Declaracion","Fecha","Fecha_anterior","Oferta","Precio",'
@@ -101,15 +108,17 @@ def validar_encabezado(archivo: Path, encoding: str, esperado: str) -> None:
         )
 
 
-def cargar(conn, archivo: Path, tabla: str, opciones: str) -> int:
-    """Reemplaza el contenido de la tabla con el archivo. Devuelve las filas cargadas."""
+def cargar(conn, archivos: list[Path], tabla: str, opciones: str) -> int:
+    """Reemplaza el contenido de la tabla con los archivos. Devuelve las filas cargadas."""
+    filas = 0
     with conn.transaction(), conn.cursor() as cur:
         cur.execute(f"TRUNCATE {tabla}")
-        copy_sql = f"COPY {tabla} FROM STDIN WITH ({opciones})"
-        with cur.copy(copy_sql) as copy, open(archivo, "rb") as f:
-            while bloque := f.read(1 << 20):
-                copy.write(bloque)
-        filas = cur.rowcount
+        for archivo in archivos:
+            copy_sql = f"COPY {tabla} FROM STDIN WITH ({opciones})"
+            with cur.copy(copy_sql) as copy, open(archivo, "rb") as f:
+                while bloque := f.read(1 << 20):
+                    copy.write(bloque)
+            filas += cur.rowcount
         # Actualiza las estadísticas que usa Postgres para planificar las consultas
         cur.execute(f"ANALYZE {tabla}")
     return filas
@@ -225,10 +234,11 @@ def main() -> None:
                 refrescar_mart(conn)
                 continue
             recurso = RECURSOS[nombre]
-            archivo = DESTINO / recurso["url"].rsplit("/", 1)[1]
-            descargar(recurso["url"], archivo)
-            validar_encabezado(archivo, recurso["encoding"], recurso["encabezado"])
-            filas = cargar(conn, archivo, recurso["tabla"], recurso["opciones"])
+            archivos = [DESTINO / url.rsplit("/", 1)[1] for url in recurso["urls"]]
+            for url, archivo in zip(recurso["urls"], archivos):
+                descargar(url, archivo)
+                validar_encabezado(archivo, recurso["encoding"], recurso["encabezado"])
+            filas = cargar(conn, archivos, recurso["tabla"], recurso["opciones"])
             print(f"  cargadas {filas:,} filas")
 
 

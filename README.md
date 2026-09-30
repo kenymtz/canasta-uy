@@ -6,7 +6,7 @@ ciudad en un mapa y armás tu canasta con productos genéricos ("aceite de giras
 ticket y ver cómo te fue comparado con tu compra anterior.
 
 Construida sobre los **datos abiertos oficiales del SIPC** (Sistema de Información de
-Precios al Consumidor): 27 millones de precios de 2025 en más de 800 comercios de todo el país.
+Precios al Consumidor): 40 millones de precios de 2025 y 2026 en casi 900 comercios de todo el país.
 
 > 🚧 Proyecto en construcción. Ver [hoja de ruta](#hoja-de-ruta).
 
@@ -85,7 +85,7 @@ instalarlo ni armar un entorno virtual.
 cp .env.example .env              # y cambiá POSTGRES_PASSWORD
 docker compose up -d              # Postgres, Metabase, la API y la web
 
-# Pipeline del SIPC: descarga (~2 GB), raw, limpieza a core y catálogo de genéricos
+# Pipeline del SIPC: descarga (~3 GB), raw, limpieza a core y catálogo de genéricos
 docker compose run --rm pipelines python -m pipelines.fuentes.sipc
 
 # Tests de la API (contra la base cargada)
@@ -125,7 +125,7 @@ docker compose logs jupyter
 ## Hoja de ruta
 
 - [x] Infraestructura: Postgres + PostGIS + pgvector + Metabase, todo en Docker
-- [x] Ingesta del SIPC a la capa raw (27 M precios de 2025)
+- [x] Ingesta del SIPC a la capa raw (40 M precios de 2025 y 2026)
 - [x] Limpieza del SIPC a core: coordenadas, duplicados, cantidades, reporte de calidad
 - [x] Categorías genéricas sin marca (137 productos en 10 categorías) y precio por unidad base
 - [x] Consulta de canasta: costo por comercio, cobertura, faltantes y presupuesto
