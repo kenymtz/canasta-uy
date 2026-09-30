@@ -13,6 +13,10 @@ __pycache__/
 .venv/
 .ipynb_checkpoints/
 
+# Web
+web/node_modules/
+web/dist/
+
 # Exportaciones de n8n con credenciales (exportá solo workflows)
 n8n/**/credentials*.json
 

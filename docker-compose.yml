@@ -1,6 +1,6 @@
 # Canasta UY — infraestructura local
 #
-#   docker compose up -d                 → Postgres (PostGIS + pgvector), Metabase y la API
+#   docker compose up -d                 → Postgres (PostGIS + pgvector), Metabase, la API y la web
 #   docker compose --profile n8n up -d   → además levanta un n8n propio del proyecto
 #   docker compose run --rm pipelines python -m pipelines.fuentes.sipc
 #   docker compose --profile jupyter up -d   → Jupyter Lab con el mismo entorno
@@ -100,6 +100,26 @@ services:
     ports:
       - "127.0.0.1:${API_PORT:-8000}:8000"
 
+  web:
+    image: node:22-alpine
+    container_name: pf-web
+    restart: unless-stopped
+    depends_on: [api]
+    working_dir: /web
+    environment:
+      API_URL: http://api:8000
+      VITE_POLLING: "1"
+    # npm install en cada arranque: rápido si no cambió nada, y deja las dependencias
+    # al día cuando cambia package.json
+    command: sh -c "npm install --no-audit --no-fund && npm run dev"
+    ports:
+      - "127.0.0.1:${WEB_PORT:-5173}:5173"
+    volumes:
+      - ./web:/web
+      # node_modules en un volumen propio: los paquetes nativos se instalan para Linux
+      # y no se mezclan con la carpeta de Windows
+      - pf_web_node_modules:/web/node_modules
+
   pipelines:
     <<: *python
     profiles: ["pipelines"]
@@ -119,3 +139,4 @@ services:
 volumes:
   pf_pgdata:
   pf_n8n:
+  pf_web_node_modules:
