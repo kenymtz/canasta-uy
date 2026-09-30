@@ -1,20 +1,24 @@
 import { useEffect, useState } from "react";
 
+import { Canasta } from "./components/Canasta";
 import { Encabezado } from "./components/Encabezado";
 import { Mapa } from "./components/Mapa";
 import { PUNTO_EN_EL_MAPA, Ubicacion } from "./components/Ubicacion";
-import { api, type Ciudad, type Comercio } from "./lib/api";
+import { api, type Ciudad, type Comercio, type Generico } from "./lib/api";
 import { useCanasta } from "./store/canasta";
 
 export default function App() {
-  const { ubicacion, radioKm, elegirUbicacion, setRadio } = useCanasta();
+  const { ubicacion, radioKm, items, presupuesto, elegirUbicacion, setRadio, sumar, restar, cargarBasica, vaciar, setPresupuesto } =
+    useCanasta();
   const [ultimoPrecio, setUltimoPrecio] = useState<string | null>(null);
   const [ciudades, setCiudades] = useState<Ciudad[]>([]);
   const [comercios, setComercios] = useState<Comercio[]>([]);
+  const [genericos, setGenericos] = useState<Generico[]>([]);
 
   useEffect(() => {
     api.salud().then((s) => setUltimoPrecio(s.ultimo_precio)).catch(() => {});
     api.ciudades().then(setCiudades).catch(() => {});
+    api.genericos().then(setGenericos).catch(() => {});
   }, []);
 
   // Comercios dentro del radio, para dibujarlos en el mapa
@@ -58,6 +62,16 @@ export default function App() {
           radioKm={radioKm}
           onElegir={({ departamento, ciudad, lat, lon }) => elegirUbicacion({ departamento, ciudad, lat, lon })}
           onRadio={setRadio}
+        />
+        <Canasta
+          genericos={genericos}
+          items={items}
+          presupuesto={presupuesto}
+          onSumar={sumar}
+          onRestar={restar}
+          onBasica={() => cargarBasica(genericos)}
+          onVaciar={vaciar}
+          onPresupuesto={setPresupuesto}
         />
       </aside>
     </div>
