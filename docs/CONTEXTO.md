@@ -236,11 +236,24 @@ Otras fuentes evaluadas:
 
 Para el objetivo actual (web de compras al menor costo en Uruguay):
 
-1. **Categorías genéricas:** `core.producto_canonico` a partir del `tipo` del SIPC, con
-   precio comparable por unidad base (kg, l, unidad) para mezclar tamaños y marcas.
-2. **Capa mart para la web:** último precio de cada categoría en cada comercio, y la consulta
-   de "canasta": costo total por comercio (y quizá combinando 2 comercios cercanos), cobertura
-   de la canasta y si entra en el presupuesto.
+1. ~~Categorías genéricas~~ ✅ (30/09/2026): `sql/transform/sipc_catalogo.sql` (paso
+   `catalogo` del pipeline). Tabla de correspondencias curada a mano: 193 tipos del SIPC →
+   **137 genéricos en 10 categorías** (variedades agrupadas: "Manzana Fuji" → "Manzana").
+   Cada genérico tiene una unidad base (kg, l, unidad o **m**: el papel higiénico se compara
+   por metro). 30 productos quedan sin vincular (útiles en hojas o sin cantidad, Repollo
+   Blanco por unidad, Crema facial y Talco en ml). Vínculos en `core.match_producto` con
+   método 'regla'; los marcados `revisado` a mano se respetan al recargar.
+2. ~~Capa mart para la web~~ ✅ (30/09/2026): `sql/init/05_mart.sql` + paso `mart` del
+   pipeline. `mart.precio_actual` (último precio por comercio y producto, solo de los últimos
+   30 días del dato), `mart.precio_generico` (cada producto útil para cada genérico, con su
+   tamaño), `mart.generico` (con `se_vende_suelto` y `comercios_con_precio`), `mart.ciudad`
+   (departamento, ciudad y centro para el mapa) y la función
+   `mart.cotizar_canasta(canasta jsonb, lat, lon, radio_km, presupuesto)`: ordena por
+   cobertura y total, no fracciona paquetes (1 l de aceite = 2 botellas de 900 cc), frutas,
+   verduras y carnes por kg se venden sueltas, e informa faltantes y detalle. ~65 ms.
+   Hallazgo: **31 frutas y verduras no tienen ningún precio en 2025** y los útiles escolares
+   solo de agosto a octubre: la web ofrece los 84 genéricos con precios vigentes.
+   Pendiente para después: combinar 2 comercios cercanos.
 3. **API (FastAPI):** departamentos y ciudades, categorías, cotizar una canasta.
 4. **Web:** mapa (Leaflet + OpenStreetMap) para elegir la ubicación, armar la canasta y ver
    los resultados.

@@ -78,7 +78,7 @@ instalarlo ni armar un entorno virtual.
 cp .env.example .env              # y cambiá POSTGRES_PASSWORD
 docker compose up -d              # Postgres + Metabase
 
-# Pipeline del SIPC: descarga (~2 GB), carga en raw y limpieza a core
+# Pipeline del SIPC: descarga (~2 GB), raw, limpieza a core y catálogo de genéricos
 docker compose run --rm pipelines python -m pipelines.fuentes.sipc
 
 # Notebooks: Jupyter Lab con el mismo entorno (el token aparece en los logs)
@@ -112,8 +112,8 @@ docker compose logs jupyter
 - [x] Infraestructura: Postgres + PostGIS + pgvector + Metabase, todo en Docker
 - [x] Ingesta del SIPC a la capa raw (27 M precios de 2025)
 - [x] Limpieza del SIPC a core: coordenadas, duplicados, cantidades, reporte de calidad
-- [ ] Categorías genéricas sin marca y precio por unidad base
-- [ ] Consulta de canasta: costo por comercio, cobertura y presupuesto
+- [x] Categorías genéricas sin marca (137 productos en 10 categorías) y precio por unidad base
+- [x] Consulta de canasta: costo por comercio, cobertura, faltantes y presupuesto
 - [ ] API (FastAPI)
 - [ ] Web con mapa interactivo (Leaflet + OpenStreetMap)
 - [ ] Cuentas de usuario y carga de tickets (QR del CFE o foto con IA)

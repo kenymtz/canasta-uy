@@ -25,15 +25,18 @@ corregidas AS (
     FROM coordenadas c
 )
 INSERT INTO core.establecimiento
-    (fuente_id, id_externo, pais, nombre, cadena, direccion, ciudad, ubicacion, actualizado_en)
+    (fuente_id, id_externo, pais, nombre, cadena, direccion, ciudad, departamento,
+     ubicacion, actualizado_en)
 SELECT
     f.id,
     c.id_establecimiento::text,
     'UY',
-    c.nombre_sucursal,
-    nullif(c.cadena, 'Sin Cadena'),                 -- "Sin Cadena" significa que no tiene
-    c.direccion,
-    c.ciudad,
+    -- trim: algunos textos traen espacios al final ("Ta - Ta - D.Lamas (Salto) ")
+    trim(c.nombre_sucursal),
+    nullif(trim(c.cadena), 'Sin Cadena'),           -- "Sin Cadena" significa que no tiene
+    trim(c.direccion),
+    trim(c.ciudad),
+    trim(c.depto),
     -- Solo se guarda la ubicación si cae dentro del rectángulo de Uruguay; si no (por ejemplo,
     -- el comercio geocodificado en Ezeiza), queda NULL: mejor sin ubicación que una falsa.
     CASE WHEN c.latitud_ok BETWEEN -35.1 AND -30.0 AND c.longitud BETWEEN -58.5 AND -53.0
@@ -47,6 +50,7 @@ ON CONFLICT (fuente_id, id_externo) DO UPDATE SET
     cadena         = EXCLUDED.cadena,
     direccion      = EXCLUDED.direccion,
     ciudad         = EXCLUDED.ciudad,
+    departamento   = EXCLUDED.departamento,
     ubicacion      = EXCLUDED.ubicacion,
     actualizado_en = EXCLUDED.actualizado_en;
 
@@ -60,13 +64,20 @@ WITH partes AS (
            regexp_match(lower(p.especificacion),
                '(1/2|[0-9]+(?:[.,][0-9]+)?)[ .]*'
                '(kg|gramos|grs?|cc|cm3|ml|lts?|us|unidad(?:es)?|docena|hojas|rollos|cm)'
-           ) AS m
+           ) AS m,
+           -- Papel higiénico: "4 rollos de 30 mts." se compara por metro (4 × 30 = 120 m);
+           -- por rollo, un paquete de 30 m parecería igual que uno de 50 m.
+           regexp_match(lower(p.especificacion), '([0-9]+) rollos de ([0-9]+) *mts') AS rollos
     FROM raw.sipc_productos p
 ),
 numeros AS (
     SELECT pa.*,
-           CASE WHEN pa.m[1] = '1/2' THEN 0.5 ELSE replace(pa.m[1], ',', '.')::numeric END AS n,
-           pa.m[2] AS u
+           CASE
+               WHEN pa.rollos IS NOT NULL THEN pa.rollos[1]::numeric * pa.rollos[2]::numeric
+               WHEN pa.m[1] = '1/2'       THEN 0.5
+               ELSE replace(pa.m[1], ',', '.')::numeric
+           END AS n,
+           CASE WHEN pa.rollos IS NOT NULL THEN 'm' ELSE pa.m[2] END AS u
     FROM partes pa
 )
 INSERT INTO core.producto_fuente
@@ -87,7 +98,7 @@ SELECT
         WHEN n.u IN ('us', 'unidad', 'unidades', 'docena') THEN 'unidad'
         WHEN n.u = 'hojas'                               THEN 'hoja'
         WHEN n.u = 'rollos'                              THEN 'rollo'
-        ELSE n.u                                         -- kg, cm o NULL si no se reconoce
+        ELSE n.u                                         -- kg, m, cm o NULL si no se reconoce
     END
 FROM numeros n
 CROSS JOIN (SELECT id FROM core.fuente WHERE codigo = 'sipc') f

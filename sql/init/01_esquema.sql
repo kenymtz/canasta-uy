@@ -40,6 +40,7 @@ CREATE TABLE core.establecimiento (
     cadena          text,
     direccion       text,
     ciudad          text,
+    departamento    text,
     ubicacion       geography(Point, 4326),
     actualizado_en  timestamptz NOT NULL DEFAULT now(),
     UNIQUE (fuente_id, id_externo)
@@ -53,7 +54,7 @@ CREATE TABLE core.producto_canonico (
     nombre          text    NOT NULL,          -- "Leche entera"
     categoria       text,
     cantidad_base   numeric NOT NULL,          -- 1
-    unidad_base     text    NOT NULL CHECK (unidad_base IN ('kg', 'l', 'unidad')),
+    unidad_base     text    NOT NULL CHECK (unidad_base IN ('kg', 'l', 'unidad', 'm')),
     -- 768 dimensiones: tamaño recomendado para gemini-embedding con salida reducida.
     -- Si cambiás de modelo, ajustá esta dimensión.
     embedding       vector(768),

@@ -3,8 +3,10 @@
 Fuente: catálogo de datos abiertos, dataset "Sistema de Información de Precios al
 Consumidor - 2025" (Defensa del Consumidor). Hay un archivo de precios por año, que se
 actualiza cada trimestre, y dos catálogos: productos y comercios.
-Destino: raw.sipc_* (tal cual vienen) y después core.establecimiento,
-core.producto_fuente y core.precio (limpios; ver sql/transform/sipc_core.sql).
+Destino: raw.sipc_* (tal cual vienen), después core.establecimiento,
+core.producto_fuente y core.precio (limpios; ver sql/transform/sipc_core.sql) y por
+último el catálogo de productos genéricos (ver sql/transform/sipc_catalogo.sql) y el
+recálculo de la capa mart que usa la web (ver sql/init/05_mart.sql).
 
 Cada paso corre dentro de una transacción: si algo falla, las tablas quedan como estaban,
 y volver a correrlo no duplica nada.
@@ -13,7 +15,7 @@ Solo se descarga un archivo si cambió de tamaño respecto de la copia local.
 Uso:
     python -m pipelines.fuentes.sipc
     python -m pipelines.fuentes.sipc --solo productos establecimientos
-    python -m pipelines.fuentes.sipc --solo core
+    python -m pipelines.fuentes.sipc --solo core catalogo mart
 """
 
 import argparse
@@ -23,6 +25,7 @@ import requests
 
 DESTINO = Path("data/raw/sipc")
 TRANSFORMACION = Path("sql/transform/sipc_core.sql")
+CATALOGO = Path("sql/transform/sipc_catalogo.sql")
 DATASET = "https://catalogodatos.gub.uy/dataset/35d8f45e-2aa7-48b5-98dd-f973b05cf8ba/resource"
 
 # El encabezado esperado funciona como contrato: si la fuente cambia columnas u orden,
@@ -161,8 +164,46 @@ def transformar(conn) -> None:
     print(f"           = {precios_core:>12,} en core")
 
 
+SIN_VINCULAR = """
+    SELECT pf.tipo, pf.descripcion_original, coalesce(pf.cantidad || ' ' || pf.unidad, 'sin cantidad')
+    FROM core.producto_fuente pf
+    JOIN core.fuente f ON f.id = pf.fuente_id AND f.codigo = 'sipc'
+    LEFT JOIN core.match_producto m ON m.producto_fuente_id = pf.id
+    WHERE m.producto_fuente_id IS NULL
+    ORDER BY 1, 2
+"""
+
+
+def armar_catalogo(conn) -> None:
+    """Crea los productos genéricos y los vincula con los del SIPC. Informa lo que quedó afuera."""
+    with conn.transaction():
+        conn.execute(CATALOGO.read_text(encoding="utf-8"))
+
+    genericos, categorias = conn.execute(
+        "SELECT count(*), count(DISTINCT categoria) FROM core.producto_canonico"
+    ).fetchone()
+    sin_vincular = conn.execute(SIN_VINCULAR).fetchall()
+    print(f"  genéricos: {genericos} en {categorias} categorías")
+    print(f"  productos sin vincular: {len(sin_vincular)} (otra unidad o sin cantidad)")
+    for _, descripcion, cantidad in sin_vincular:
+        print(f"    - {descripcion} ({cantidad})")
+
+
+def refrescar_mart(conn) -> None:
+    """Recalcula las vistas materializadas de mart (en orden: una usa la otra)."""
+    with conn.transaction():
+        conn.execute("REFRESH MATERIALIZED VIEW mart.precio_actual")
+        conn.execute("REFRESH MATERIALIZED VIEW mart.precio_generico")
+    comercios, genericos, filas, desde, hasta = conn.execute(
+        "SELECT count(DISTINCT establecimiento_id), count(DISTINCT producto_canonico_id), "
+        "count(*), min(fecha), max(fecha) FROM mart.precio_generico"
+    ).fetchone()
+    print(f"  precios vigentes: {filas:,} ({comercios} comercios, {genericos} genéricos, "
+          f"del {desde} al {hasta})")
+
+
 def main() -> None:
-    pasos = [*RECURSOS, "core"]
+    pasos = [*RECURSOS, "core", "catalogo", "mart"]
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--solo", nargs="+", choices=pasos, default=pasos)
     args = parser.parse_args()
@@ -176,6 +217,12 @@ def main() -> None:
             print(f"{nombre}:")
             if nombre == "core":
                 transformar(conn)
+                continue
+            if nombre == "catalogo":
+                armar_catalogo(conn)
+                continue
+            if nombre == "mart":
+                refrescar_mart(conn)
                 continue
             recurso = RECURSOS[nombre]
             archivo = DESTINO / recurso["url"].rsplit("/", 1)[1]
