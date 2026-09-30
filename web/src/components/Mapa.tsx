@@ -1,5 +1,6 @@
 import {
   AttributionControl,
+  type FilterSpecification,
   type GeoJSONSource,
   Map as MapaML,
   Marker,
@@ -38,27 +39,30 @@ const LIMITES_URUGUAY: [[number, number], [number, number]] = [
 const MAX_ETIQUETAS = 15; // con más, el mapa se vuelve ilegible
 
 // Contorno de Uruguay y de sus 19 departamentos (geoBoundaries, a partir de OpenStreetMap,
-// licencia ODbL), guardados en web/public/geo. Con el contorno se arma una "máscara": el
-// mundo entero con un agujero con la forma de Uruguay, para oscurecer lo que queda afuera.
-const MASCARA = fetch("/geo/uruguay.geojson")
+// licencia ODbL), guardados en web/public/geo. El contorno sirve para dos cosas: armar una
+// "máscara" (el mundo entero con un agujero con la forma de Uruguay) que oscurece lo de
+// afuera, y mostrar solo los nombres de lugares que están dentro del país.
+const PAIS = fetch("/geo/uruguay.geojson")
   .then((r) => r.json())
-  .then((pais: FeatureCollection<Polygon>) => ({
-    type: "Feature" as const,
-    properties: {},
-    geometry: {
-      type: "Polygon" as const,
-      coordinates: [
-        [
-          [-180, -85],
-          [180, -85],
-          [180, 85],
-          [-180, 85],
-          [-180, -85],
-        ],
-        pais.features[0].geometry.coordinates[0],
+  .then((fc: FeatureCollection<Polygon>) => fc.features[0].geometry);
+
+const MASCARA = PAIS.then((pais) => ({
+  type: "Feature" as const,
+  properties: {},
+  geometry: {
+    type: "Polygon" as const,
+    coordinates: [
+      [
+        [-180, -85],
+        [180, -85],
+        [180, 85],
+        [-180, 85],
+        [-180, -85],
       ],
-    },
-  }));
+      pais.coordinates[0],
+    ],
+  },
+}));
 
 interface Props {
   centro: { lat: number; lon: number } | null;
@@ -78,12 +82,29 @@ const token = (nombre: string) =>
 
 /** Tiñe el fondo del mapa con el color de la web y agrega las capas propias. */
 function prepararEstilo(mapa: MapaML) {
-  for (const capa of mapa.getStyle().layers) {
+  const capasBase = mapa.getStyle().layers;
+  for (const capa of capasBase) {
     if (capa.type === "background") mapa.setPaintProperty(capa.id, "background-color", token("--color-fondo"));
     // Los límites del mapa base son grises y punteados; se reemplazan por los propios
     if (capa.id.startsWith("boundary")) mapa.setLayoutProperty(capa.id, "visibility", "none");
   }
   const acento = token("--color-acento");
+
+  // Las capas propias (máscara, límites, radio) van por debajo de los nombres del mapa, para
+  // que ninguna línea tape un nombre; solo los puntos de los comercios van encima.
+  const debajoDeLosNombres = capasBase.find((c) => c.type === "symbol")?.id;
+
+  // Solo los nombres de lugares dentro de Uruguay: se suma la condición "within" al filtro
+  // que ya trae cada capa de texto del mapa base
+  const nombres = capasBase.filter((c) => c.type === "symbol").map((c) => c.id);
+  PAIS.then((pais) => {
+    for (const id of nombres) {
+      if (!mapa.getLayer(id)) continue;
+      const filtro = mapa.getFilter(id);
+      const dentro = ["within", { type: "Feature", properties: {}, geometry: pais }];
+      mapa.setFilter(id, (filtro ? ["all", filtro, dentro] : dentro) as FilterSpecification);
+    }
+  });
 
   if (!mapa.getSource("mascara")) {
     mapa.addSource("mascara", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
@@ -97,7 +118,7 @@ function prepararEstilo(mapa: MapaML) {
         "fill-color": token("--color-fondo"),
         "fill-opacity": ["interpolate", ["linear"], ["zoom"], 6, oscuro() ? 0.8 : 0.72, 9, 0.45, 11, 0],
       },
-    });
+    }, debajoDeLosNombres);
     MASCARA.then((m) => mapa.getSource<GeoJSONSource>("mascara")?.setData(m));
   }
   if (!mapa.getSource("departamentos")) {
@@ -110,7 +131,7 @@ function prepararEstilo(mapa: MapaML) {
       source: "departamentos",
       filter: ["==", ["get", "nombre"], ""],
       paint: { "fill-color": acento, "fill-opacity": ["interpolate", ["linear"], ["zoom"], 6, 0.12, 11, 0.04] },
-    });
+    }, debajoDeLosNombres);
     mapa.addLayer({
       id: "limites-departamentos",
       type: "line",
@@ -120,7 +141,7 @@ function prepararEstilo(mapa: MapaML) {
         "line-opacity": ["interpolate", ["linear"], ["zoom"], 6, 0.6, 10, 0.3, 12, 0],
         "line-width": ["interpolate", ["linear"], ["zoom"], 5, 0.9, 10, 1.6],
       },
-    });
+    }, debajoDeLosNombres);
     mapa.addLayer({
       id: "limite-elegido",
       type: "line",
@@ -131,7 +152,7 @@ function prepararEstilo(mapa: MapaML) {
         "line-opacity": ["interpolate", ["linear"], ["zoom"], 9, 1, 12, 0],
         "line-width": ["interpolate", ["linear"], ["zoom"], 5, 1.5, 10, 2.5],
       },
-    });
+    }, debajoDeLosNombres);
     mapa.addLayer({
       id: "limite-uruguay",
       type: "line",
@@ -141,17 +162,20 @@ function prepararEstilo(mapa: MapaML) {
         "line-opacity": ["interpolate", ["linear"], ["zoom"], 6, 0.75, 10, 0.3, 12, 0],
         "line-width": ["interpolate", ["linear"], ["zoom"], 5, 1.3, 10, 2.2],
       },
-    });
+    }, debajoDeLosNombres);
   }
   if (!mapa.getSource("radio")) {
     mapa.addSource("radio", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
-    mapa.addLayer({ id: "radio-relleno", type: "fill", source: "radio", paint: { "fill-color": acento, "fill-opacity": 0.05 } });
+    mapa.addLayer(
+      { id: "radio-relleno", type: "fill", source: "radio", paint: { "fill-color": acento, "fill-opacity": 0.05 } },
+      debajoDeLosNombres,
+    );
     mapa.addLayer({
       id: "radio-borde",
       type: "line",
       source: "radio",
       paint: { "line-color": acento, "line-width": 1.5, "line-dasharray": [2, 2] },
-    });
+    }, debajoDeLosNombres);
   }
   if (!mapa.getSource("comercios")) {
     mapa.addSource("comercios", { type: "geojson", data: { type: "FeatureCollection", features: [] } });
