@@ -6,6 +6,18 @@
     <meta name="description" content="Armá tu canasta y mirá en qué comercio de tu ciudad te sale más barata, con precios oficiales del SIPC." />
     <meta name="color-scheme" content="light dark" />
     <title>Canasta UY</title>
+    <script>
+      // El tema se decide antes de dibujar la página: si no, al abrir en oscuro se vería un
+      // destello en claro. Manda la elección guardada; si no hay, el tema del sistema.
+      (function () {
+        var tema = null;
+        try { tema = localStorage.getItem("tema"); } catch (e) {}
+        if (tema !== "claro" && tema !== "oscuro") {
+          tema = matchMedia("(prefers-color-scheme: dark)").matches ? "oscuro" : "claro";
+        }
+        document.documentElement.dataset.tema = tema;
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>

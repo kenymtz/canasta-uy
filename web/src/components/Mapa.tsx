@@ -13,6 +13,7 @@ import type { FeatureCollection, Polygon } from "geojson";
 
 import type { Comercio, ResultadoComercio } from "../lib/api";
 import { formatoPlata } from "../lib/formato";
+import { temaActual } from "../lib/tema";
 import { circulo, limitesCirculo } from "../lib/geo";
 
 // MapLibre dibuja en un proceso aparte (worker). Vite reempaqueta la librería y rompe la ruta
@@ -70,7 +71,7 @@ interface Props {
   onElegirPunto: (lat: number, lon: number) => void;
 }
 
-const oscuro = () => window.matchMedia("(prefers-color-scheme: dark)").matches;
+const oscuro = () => temaActual() === "oscuro";
 const sinMovimiento = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const token = (nombre: string) =>
   getComputedStyle(document.documentElement).getPropertyValue(nombre).trim();
@@ -232,13 +233,12 @@ export function Mapa({ centro, departamento, radioKm, comercios, resultados, sel
     m.on("moveend", () => evitarSolapes(etiquetas.current));
     mapa.current = m;
 
-    // Si el sistema cambia entre claro y oscuro, el mapa también
-    const tema = window.matchMedia("(prefers-color-scheme: dark)");
-    const alCambiarTema = () => m.setStyle(oscuro() ? ESTILOS.oscuro : ESTILOS.claro);
-    tema.addEventListener("change", alCambiarTema);
+    // Cuando cambia el tema (botón o sistema), el mapa cambia de estilo
+    const observador = new MutationObserver(() => m.setStyle(oscuro() ? ESTILOS.oscuro : ESTILOS.claro));
+    observador.observe(document.documentElement, { attributes: true, attributeFilter: ["data-tema"] });
 
     return () => {
-      tema.removeEventListener("change", alCambiarTema);
+      observador.disconnect();
       m.remove();
       mapa.current = null;
     };

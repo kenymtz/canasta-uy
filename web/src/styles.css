@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 /* ─── Tokens ────────────────────────────────────────────────────────────────
+   El tema lo decide el atributo data-tema de <html> (claro u oscuro): lo pone un script al
+   arrancar según tu elección guardada o, si no elegiste, según tu sistema.
    Neutros fríos con un toque verde y un único acento ("ahorro"). El papel del ticket es
    un poco más claro que el fondo para que el ticket se despegue sin sombras pesadas. */
 @theme {
@@ -24,23 +26,22 @@
   --ease-salida: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-fondo: #0d1311;
-    --color-panel: #121a17;
-    --color-ticket: #19221f;
-    --color-tinta: #e4ebe8;
-    --color-tinta-suave: #9aa9a3;
-    --color-linea: #2b3733;
-    --color-acento: #4cc38a;
-    --color-acento-suave: #173a2a;
-    --color-sobre-acento: #06140d;
-    --color-alerta: #f08a64;
-  }
+:root[data-tema="oscuro"] {
+  --color-fondo: #0d1311;
+  --color-panel: #121a17;
+  --color-ticket: #19221f;
+  --color-tinta: #e4ebe8;
+  --color-tinta-suave: #9aa9a3;
+  --color-linea: #2b3733;
+  --color-acento: #4cc38a;
+  --color-acento-suave: #173a2a;
+  --color-sobre-acento: #06140d;
+  --color-alerta: #f08a64;
+  color-scheme: dark; /* selectores, barras de scroll y demás controles nativos, en oscuro */
 }
 
-html {
-  color-scheme: light dark;
+:root {
+  color-scheme: light;
 }
 
 body {
@@ -64,10 +65,8 @@ body {
   filter: drop-shadow(0 10px 22px rgb(20 32 27 / 0.12));
 }
 
-@media (prefers-color-scheme: dark) {
-  .ticket-sombra {
-    filter: drop-shadow(0 10px 22px rgb(0 0 0 / 0.35));
-  }
+:root[data-tema="oscuro"] .ticket-sombra {
+  filter: drop-shadow(0 10px 22px rgb(0 0 0 / 0.35));
 }
 
 .ticket {
@@ -142,16 +141,14 @@ body {
   color: inherit;
 }
 
-@media (prefers-color-scheme: dark) {
-  .maplibregl-ctrl-group button + button {
-    border-top-color: var(--color-linea);
-  }
+:root[data-tema="oscuro"] .maplibregl-ctrl-group button + button {
+  border-top-color: var(--color-linea);
+}
 
-  /* Los íconos de MapLibre son imágenes negras: se invierten para que se vean */
-  .maplibregl-ctrl-group .maplibregl-ctrl-icon,
-  .maplibregl-ctrl-attrib-button {
-    filter: invert(1);
-  }
+/* Los íconos de MapLibre son imágenes negras: se invierten para que se vean */
+:root[data-tema="oscuro"] .maplibregl-ctrl-group .maplibregl-ctrl-icon,
+:root[data-tema="oscuro"] .maplibregl-ctrl-attrib-button {
+  filter: invert(1);
 }
 
 /* ─── Vida: textura, borde de ticket y resaltador ─────────────────────────── */
@@ -169,13 +166,11 @@ body::after {
   mix-blend-mode: multiply;
 }
 
-@media (prefers-color-scheme: dark) {
-  body::after {
-    /* En oscuro el grano es claro: uno negro no se vería */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
-    opacity: 0.05;
-    mix-blend-mode: screen;
-  }
+:root[data-tema="oscuro"] body::after {
+  /* En oscuro el grano es claro: uno negro no se vería */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  opacity: 0.05;
+  mix-blend-mode: screen;
 }
 
 /* El panel entero es un ticket recién cortado: borde dentado arriba en el celular y a la
@@ -244,8 +239,27 @@ body::after {
   background-attachment: local;
 }
 
-@media (prefers-color-scheme: dark) {
-  .papel-libreta {
-    --cuadricula: rgb(228 235 232 / 0.045);
+:root[data-tema="oscuro"] .papel-libreta {
+  --cuadricula: rgb(228 235 232 / 0.045);
+}
+
+/* Botón de tema: el ícono que sale gira y se achica mientras aparece el otro */
+.icono-tema {
+  position: absolute;
+  transition: opacity 220ms var(--ease-salida), transform 220ms var(--ease-salida);
+}
+
+.icono-tema.oculto {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .icono-tema {
+    transition: opacity 120ms ease;
+  }
+
+  .icono-tema.oculto {
+    transform: none;
   }
 }

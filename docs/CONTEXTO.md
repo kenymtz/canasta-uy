@@ -294,6 +294,9 @@ Para el objetivo actual (web de compras al menor costo en Uruguay):
    estructura: grano de papel térmico, panel con borde dentado de ticket y sombra sobre el
    mapa, íconos por categoría, resaltador en el título, talón con datos reales (comercios,
    productos, departamentos, fecha) y cantidades animadas.
+   Botón de tema (sol/luna): por defecto sigue al sistema; la elección se guarda en el
+   navegador y un script en `index.html` la aplica antes de dibujar (sin destello). El CSS
+   usa `:root[data-tema="oscuro"]` en lugar de `prefers-color-scheme`.
 5. **Usuarios y tickets:** cuentas, subir el ticket (investigar el QR del CFE de la DGI;
    si no alcanza, foto + extracción con IA), comparar con la compra anterior.
 6. Calidad: guardar el reporte de cada carga en una tabla. Despliegue en un VPS.
