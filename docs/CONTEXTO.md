@@ -254,7 +254,14 @@ Para el objetivo actual (web de compras al menor costo en Uruguay):
    Hallazgo: **31 frutas y verduras no tienen ningún precio en 2025** y los útiles escolares
    solo de agosto a octubre: la web ofrece los 84 genéricos con precios vigentes.
    Pendiente para después: combinar 2 comercios cercanos.
-3. **API (FastAPI):** departamentos y ciudades, categorías, cotizar una canasta.
+3. ~~API (FastAPI)~~ ✅ (30/09/2026): `api/main.py` + servicio `api` del compose
+   (http://localhost:8000/docs). Endpoints: `GET /salud`, `/ciudades`, `/genericos`,
+   `/comercios?lat&lon&radio_km`, `POST /canasta/cotizar`. Validación con Pydantic (422:
+   fuera del rectángulo de Uruguay, cantidades ≤ 0, repetidos, ids inexistentes); el
+   rectángulo es grueso (Buenos Aires queda adentro), pero ahí la respuesta es `[]`.
+   Conexión de solo lectura (`default_transaction_read_only`, verificado). 14 tests en
+   `tests/test_api.py` contra la base real: `docker compose run --rm pipelines pytest -v`.
+   Pendiente para el despliegue: un rol de Postgres propio con solo SELECT.
 4. **Web:** mapa (Leaflet + OpenStreetMap) para elegir la ubicación, armar la canasta y ver
    los resultados.
 5. **Usuarios y tickets:** cuentas, subir el ticket (investigar el QR del CFE de la DGI;

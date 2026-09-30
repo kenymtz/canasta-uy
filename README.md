@@ -76,10 +76,13 @@ instalarlo ni armar un entorno virtual.
 
 ```bash
 cp .env.example .env              # y cambiá POSTGRES_PASSWORD
-docker compose up -d              # Postgres + Metabase
+docker compose up -d              # Postgres, Metabase y la API
 
 # Pipeline del SIPC: descarga (~2 GB), raw, limpieza a core y catálogo de genéricos
 docker compose run --rm pipelines python -m pipelines.fuentes.sipc
+
+# Tests de la API (contra la base cargada)
+docker compose run --rm pipelines pytest -v
 
 # Notebooks: Jupyter Lab con el mismo entorno (el token aparece en los logs)
 docker compose --profile jupyter up -d
@@ -88,6 +91,7 @@ docker compose logs jupyter
 
 | Servicio | URL |
 |---|---|
+| API (documentación interactiva) | http://localhost:8000/docs |
 | Metabase | http://localhost:3000 |
 | Postgres | `localhost:5433` (usuario y base según `.env`) |
 | Jupyter Lab (perfil opcional) | http://localhost:8888 |
@@ -101,6 +105,8 @@ docker compose logs jupyter
 ├── sql/init/                # extensiones, esquema, datos base, vistas y tablas raw
 ├── sql/transform/           # transformaciones raw → core (una por fuente)
 ├── pipelines/fuentes/       # ingesta por fuente (SIPC)
+├── api/                     # API (FastAPI): ciudades, genéricos, comercios y cotización
+├── tests/                   # tests de la API
 ├── docs/                    # contexto del proyecto y fuentes de datos
 ├── notebooks/               # exploración de datos
 ├── eval/                    # conjuntos de prueba y métricas
@@ -114,7 +120,7 @@ docker compose logs jupyter
 - [x] Limpieza del SIPC a core: coordenadas, duplicados, cantidades, reporte de calidad
 - [x] Categorías genéricas sin marca (137 productos en 10 categorías) y precio por unidad base
 - [x] Consulta de canasta: costo por comercio, cobertura, faltantes y presupuesto
-- [ ] API (FastAPI)
+- [x] API (FastAPI) con validación, conexión de solo lectura y tests
 - [ ] Web con mapa interactivo (Leaflet + OpenStreetMap)
 - [ ] Cuentas de usuario y carga de tickets (QR del CFE o foto con IA)
 - [ ] Comparación con la compra anterior

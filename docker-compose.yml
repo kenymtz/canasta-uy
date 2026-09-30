@@ -1,6 +1,6 @@
 # Canasta UY — infraestructura local
 #
-#   docker compose up -d                 → Postgres (PostGIS + pgvector) + Metabase
+#   docker compose up -d                 → Postgres (PostGIS + pgvector), Metabase y la API
 #   docker compose --profile n8n up -d   → además levanta un n8n propio del proyecto
 #   docker compose run --rm pipelines python -m pipelines.fuentes.sipc
 #   docker compose --profile jupyter up -d   → Jupyter Lab con el mismo entorno
@@ -90,6 +90,15 @@ services:
     volumes:
       - pf_n8n:/home/node/.n8n
       - ./data/inbox:/files
+
+  api:
+    <<: *python
+    container_name: pf-api
+    restart: unless-stopped
+    # --reload: reinicia sola cuando cambia el código (cómodo en desarrollo)
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
 
   pipelines:
     <<: *python
