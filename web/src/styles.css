@@ -1,1 +1,129 @@
 @import "tailwindcss";
+
+/* ─── Tokens ────────────────────────────────────────────────────────────────
+   Neutros fríos con un toque verde y un único acento ("ahorro"). El papel del ticket es
+   un poco más claro que el fondo para que el ticket se despegue sin sombras pesadas. */
+@theme {
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+
+  --color-fondo: #e7ecea;
+  --color-panel: #f1f4f3;
+  --color-ticket: #fbfcfb;
+  --color-tinta: #14201b;
+  --color-tinta-suave: #56645e;
+  --color-linea: #d3dcd8;
+  --color-acento: #167a4f;
+  --color-acento-suave: #dcefe5;
+  --color-sobre-acento: #f6fbf8;
+  --color-alerta: #a3401f;
+
+  --radius-caja: 14px;
+  --radius-control: 10px;
+
+  --ease-salida: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-fondo: #0d1311;
+    --color-panel: #121a17;
+    --color-ticket: #19221f;
+    --color-tinta: #e4ebe8;
+    --color-tinta-suave: #9aa9a3;
+    --color-linea: #2b3733;
+    --color-acento: #4cc38a;
+    --color-acento-suave: #173a2a;
+    --color-sobre-acento: #06140d;
+    --color-alerta: #f08a64;
+  }
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  background: var(--color-fondo);
+  color: var(--color-tinta);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Precios: números de ancho fijo para que las columnas queden alineadas como en un ticket */
+.numeros {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Ticket ────────────────────────────────────────────────────────────────
+   Borde inferior dentado con dos capas de máscara: un rectángulo que cubre todo menos la
+   franja de abajo, y una fila de triángulos que la completa. La sombra va en el contenedor
+   (.ticket-sombra) porque la máscara recortaría una box-shadow. */
+.ticket-sombra {
+  filter: drop-shadow(0 10px 22px rgb(20 32 27 / 0.12));
+}
+
+@media (prefers-color-scheme: dark) {
+  .ticket-sombra {
+    filter: drop-shadow(0 10px 22px rgb(0 0 0 / 0.35));
+  }
+}
+
+.ticket {
+  --diente: 14px;
+  background: var(--color-ticket);
+  border-radius: var(--radius-caja) var(--radius-caja) 0 0;
+  padding-bottom: calc(var(--diente) / 2 + 12px);
+  mask:
+    linear-gradient(#000 0 0) top / 100% calc(100% - var(--diente) / 2) no-repeat,
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom /
+      var(--diente) calc(var(--diente) / 2) repeat-x;
+}
+
+.ticket-corte {
+  border-top: 1.5px dashed var(--color-linea);
+}
+
+/* ─── Interacción ───────────────────────────────────────────────────────── */
+.presionable {
+  transition: transform 160ms var(--ease-salida), background-color 160ms ease, color 160ms ease;
+}
+
+.presionable:active {
+  transform: scale(0.97);
+}
+
+/* El ticket nuevo "sale" de la impresora: baja un poco y aparece */
+@media (prefers-reduced-motion: no-preference) {
+  .imprimir {
+    animation: imprimir 260ms var(--ease-salida) both;
+  }
+
+  @keyframes imprimir {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+  }
+}
+
+/* Foco visible y consistente para quien navega con teclado */
+:focus-visible {
+  outline: 2px solid var(--color-acento);
+  outline-offset: 2px;
+}
+
+/* Etiquetas de precio sobre el mapa */
+.pin {
+  transition: transform 160ms var(--ease-salida);
+}
+
+.pin[data-activo="true"] {
+  transform: scale(1.08);
+}
+
+.maplibregl-ctrl-attrib {
+  font-family: var(--font-sans);
+  font-size: 11px;
+}
