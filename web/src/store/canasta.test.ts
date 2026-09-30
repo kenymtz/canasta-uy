@@ -15,7 +15,7 @@ const huevos: Generico = {
 const aceite: Generico = { ...huevos, producto_canonico_id: 3, nombre: "Aceite de girasol", unidad_base: "l" };
 
 describe("useCanasta", () => {
-  beforeEach(() => useCanasta.getState().vaciar());
+  beforeEach(() => useCanasta.setState({ items: {}, listas: [] }));
 
   it("sumar agrega el producto con su cantidad inicial y después suma de a un paso", () => {
     const { sumar } = useCanasta.getState();
@@ -35,12 +35,42 @@ describe("useCanasta", () => {
     expect(useCanasta.getState().items).not.toHaveProperty("10");
   });
 
-  it("cargarBasica usa los productos que existen e ignora los que no", () => {
-    useCanasta.getState().cargarBasica([huevos, aceite]);
-    const { items } = useCanasta.getState();
-    expect(items[10]).toBe(12);
-    expect(items[3]).toBe(0.9);
-    expect(Object.keys(items)).toHaveLength(2);
+  it("guardar una lista y cargarla después con un toque", () => {
+    const { sumar, guardarLista, vaciar, cargarLista } = useCanasta.getState();
+    sumar(huevos);
+    sumar(aceite);
+    guardarLista("Compra del mes");
+    vaciar();
+    expect(useCanasta.getState().items).toEqual({});
+    cargarLista("Compra del mes");
+    expect(useCanasta.getState().items).toEqual({ 10: 6, 3: 0.9 });
+  });
+
+  it("guardar con un nombre que ya existe actualiza esa lista", () => {
+    const { sumar, guardarLista } = useCanasta.getState();
+    sumar(huevos);
+    guardarLista("Compra del mes");
+    sumar(huevos);
+    guardarLista("  Compra del mes ");
+    const { listas } = useCanasta.getState();
+    expect(listas).toHaveLength(1);
+    expect(listas[0].items).toEqual({ 10: 12 });
+  });
+
+  it("guardar sin nombre o con la canasta vacía no hace nada", () => {
+    const { sumar, guardarLista } = useCanasta.getState();
+    guardarLista("Vacía");
+    sumar(huevos);
+    guardarLista("   ");
+    expect(useCanasta.getState().listas).toHaveLength(0);
+  });
+
+  it("borrar una lista", () => {
+    const { sumar, guardarLista, borrarLista } = useCanasta.getState();
+    sumar(huevos);
+    guardarLista("Asado");
+    borrarLista("Asado");
+    expect(useCanasta.getState().listas).toHaveLength(0);
   });
 
   it("el presupuesto vacío o no positivo queda como null", () => {

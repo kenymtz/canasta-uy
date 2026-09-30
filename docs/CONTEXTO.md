@@ -272,6 +272,12 @@ Para el objetivo actual (web de compras al menor costo en Uruguay):
    AA verificado, estados de vacío/error/sin comercios. 18 tests de Vitest y capturas con
    Playwright (`web/scripts/capturas.mjs`, imagen `mcr.microsoft.com/playwright:v1.63.0-noble`).
    Skills de diseño instaladas en `~/.claude/skills` (taste-skill, Emil Kowalski, find-skills).
+   Ajustes pedidos por Augusto: se quitó la "Canasta básica" (le pareció redundante) y se
+   agregó **Mis listas** (guardar la canasta con un nombre y cargarla con un toque; hoy en el
+   navegador, en el paso 5 pasan a la cuenta del usuario). Para darle vida sin cambiar la
+   estructura: grano de papel térmico, panel con borde dentado de ticket y sombra sobre el
+   mapa, íconos por categoría, resaltador en el título, talón con datos reales (comercios,
+   productos, departamentos, fecha) y cantidades animadas.
 5. **Usuarios y tickets:** cuentas, subir el ticket (investigar el QR del CFE de la DGI;
    si no alcanza, foto + extracción con IA), comparar con la compra anterior.
 6. Calidad: guardar el reporte de cada carga en una tabla. Despliegue en un VPS.

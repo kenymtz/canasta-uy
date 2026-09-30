@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatoCantidad, formatoPlata, nombreProducto } from "./formato";
+import { formatoCantidad, formatoPlata, nombreProducto, partesCantidad } from "./formato";
 
 describe("formatoPlata", () => {
   it("usa punto de miles y coma decimal, como en Uruguay", () => {
@@ -43,5 +43,14 @@ describe("nombreProducto", () => {
 
   it("deja igual los nombres sin ese agregado", () => {
     expect(nombreProducto("Arroz blanco Aruba tipo Patna Bolsa 1 kg.")).toBe("Arroz blanco Aruba tipo Patna Bolsa 1 kg.");
+  });
+});
+
+describe("partesCantidad", () => {
+  it("separa número y unidad, pasando a gramos o mililitros debajo de 1", () => {
+    expect(partesCantidad(0.5, "kg")).toEqual({ valor: 500, sufijo: "g" });
+    expect(partesCantidad(1.5, "kg")).toEqual({ valor: 1.5, sufijo: "kg" });
+    expect(partesCantidad(0.9, "l")).toEqual({ valor: 900, sufijo: "ml" });
+    expect(partesCantidad(12, "unidad")).toEqual({ valor: 12, sufijo: "u" });
   });
 });

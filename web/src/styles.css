@@ -153,3 +153,80 @@ body {
     filter: invert(1);
   }
 }
+
+/* ─── Vida: textura, borde de ticket y resaltador ─────────────────────────── */
+
+/* Grano de papel térmico sobre toda la página. Va en un pseudo-elemento fijo y sin eventos:
+   no se repinta al hacer scroll, así no afecta el rendimiento en el celular. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  opacity: 0.07;
+  mix-blend-mode: multiply;
+}
+
+@media (prefers-color-scheme: dark) {
+  body::after {
+    /* En oscuro el grano es claro: uno negro no se vería */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+    opacity: 0.05;
+    mix-blend-mode: screen;
+  }
+}
+
+/* El panel entero es un ticket recién cortado: borde dentado arriba en el celular y a la
+   izquierda en la computadora (mismo recurso de máscara que el ticket). */
+.panel-cortado {
+  --diente: 16px;
+  mask:
+    linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--diente) / 2) no-repeat,
+    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / var(--diente)
+      calc(var(--diente) / 2) repeat-x;
+}
+
+@media (min-width: 1024px) {
+  .panel-cortado {
+    mask:
+      linear-gradient(#000 0 0) right / calc(100% - var(--diente) / 2) 100% no-repeat,
+      conic-gradient(from 45deg at left, #0000, #000 1deg 89deg, #0000 90deg) left /
+        calc(var(--diente) / 2) var(--diente) repeat-y;
+  }
+}
+
+/* Resaltador sobre las palabras clave del título; se "pinta" una vez al cargar */
+.resaltado {
+  color: inherit;
+  padding: 0 0.06em;
+  background: linear-gradient(color-mix(in oklab, var(--color-acento) 30%, transparent) 0 0) no-repeat
+    0 88% / 100% 0.42em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .resaltado {
+    animation: resaltar 700ms 250ms var(--ease-salida) both;
+  }
+
+  @keyframes resaltar {
+    from {
+      background-size: 0% 0.42em;
+    }
+  }
+
+  /* Los controles de cantidad aparecen al agregar un producto */
+  .aparecer {
+    animation: aparecer 180ms var(--ease-salida) both;
+  }
+
+  @keyframes aparecer {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+  }
+}

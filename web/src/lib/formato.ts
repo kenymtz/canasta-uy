@@ -20,12 +20,17 @@ export function formatoPlata(monto: number): string {
   return `$ ${formato.format(redondeado)}`;
 }
 
+/** Número y unidad por separado (para animar el número): 0,5 kg → 500 g. */
+export function partesCantidad(cantidad: number, unidad: Unidad): { valor: number; sufijo: string } {
+  if (unidad === "kg" && cantidad < 1) return { valor: Math.round(cantidad * 1000), sufijo: "g" };
+  if (unidad === "l" && cantidad < 1) return { valor: Math.round(cantidad * 1000), sufijo: "ml" };
+  return { valor: cantidad, sufijo: { kg: "kg", l: "l", unidad: "u", m: "m" }[unidad] };
+}
+
 /** 500 g, 1,5 kg, 900 ml, 2 l, 12 u, 120 m. */
 export function formatoCantidad(cantidad: number, unidad: Unidad): string {
-  if (unidad === "kg" && cantidad < 1) return `${entero.format(cantidad * 1000)} g`;
-  if (unidad === "l" && cantidad < 1) return `${entero.format(cantidad * 1000)} ml`;
-  const sufijo = { kg: "kg", l: "l", unidad: "u", m: "m" }[unidad];
-  return `${hastaDosDecimales.format(cantidad)} ${sufijo}`;
+  const { valor, sufijo } = partesCantidad(cantidad, unidad);
+  return `${(Number.isInteger(valor) ? entero : hastaDosDecimales).format(valor)} ${sufijo}`;
 }
 
 /** Quita tildes y mayúsculas para buscar: "azucar" encuentra "Azúcar". */

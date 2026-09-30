@@ -1,8 +1,12 @@
-import { Basket, MagnifyingGlass, Minus, Plus, Trash } from "@phosphor-icons/react";
+import NumberFlow from "@number-flow/react";
+import { MagnifyingGlass, Minus, Plus, Trash } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
 
 import type { Generico } from "../lib/api";
-import { formatoCantidad, normalizar } from "../lib/formato";
+import { IconoCategoria } from "../lib/categorias";
+import { normalizar, partesCantidad } from "../lib/formato";
+import type { Lista } from "../store/canasta";
+import { MisListas } from "./MisListas";
 
 const TU_CANASTA = "Tu canasta";
 
@@ -10,11 +14,14 @@ interface Props {
   genericos: Generico[];
   items: Record<number, number>;
   presupuesto: number | null;
+  listas: Lista[];
   onSumar: (g: Generico) => void;
   onRestar: (g: Generico) => void;
-  onBasica: () => void;
   onVaciar: () => void;
   onPresupuesto: (monto: number | null) => void;
+  onGuardarLista: (nombre: string) => void;
+  onCargarLista: (nombre: string) => void;
+  onBorrarLista: (nombre: string) => void;
 }
 
 const botonSecundario =
@@ -27,7 +34,19 @@ function pista(g: Generico): string {
   return { kg: "por peso", l: "por litro", unidad: "por unidad", m: "por metro" }[g.unidad_base];
 }
 
-export function Canasta({ genericos, items, presupuesto, onSumar, onRestar, onBasica, onVaciar, onPresupuesto }: Props) {
+/** La cantidad con los números que giran como en una caja registradora. */
+function Cantidad({ cantidad, g }: { cantidad: number; g: Generico }) {
+  const { valor, sufijo } = partesCantidad(cantidad, g.unidad_base);
+  return (
+    <span className="numeros inline-flex w-16 items-baseline justify-center gap-1 text-sm font-medium" aria-live="polite">
+      <NumberFlow value={valor} locales="es-UY" format={{ maximumFractionDigits: 2 }} />
+      <span>{sufijo}</span>
+    </span>
+  );
+}
+
+export function Canasta(p: Props) {
+  const { genericos, items } = p;
   const cantidadItems = Object.keys(items).length;
   const categorias = useMemo(() => [...new Set(genericos.map((g) => g.categoria))], [genericos]);
   const [categoria, setCategoria] = useState<string>(cantidadItems > 0 ? TU_CANASTA : "Almacén");
@@ -42,30 +61,29 @@ export function Canasta({ genericos, items, presupuesto, onSumar, onRestar, onBa
 
   return (
     <section aria-labelledby="titulo-que" className="flex flex-col gap-4">
-      <h2 id="titulo-que" className="text-lg font-semibold tracking-tight">
-        Qué vas a comprar
-      </h2>
-
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          className={botonSecundario}
-          onClick={() => {
-            onBasica();
-            setBusqueda("");
-            setCategoria(TU_CANASTA);
-          }}
-        >
-          <Basket size={18} aria-hidden />
-          Canasta básica
-        </button>
+      <div className="flex items-center justify-between gap-3">
+        <h2 id="titulo-que" className="text-lg font-semibold tracking-tight">
+          Qué vas a comprar
+        </h2>
         {cantidadItems > 0 && (
-          <button type="button" className={botonSecundario} onClick={onVaciar}>
+          <button type="button" className={botonSecundario} onClick={p.onVaciar}>
             <Trash size={18} aria-hidden />
             Vaciar
           </button>
         )}
       </div>
+
+      <MisListas
+        listas={p.listas}
+        items={items}
+        onGuardar={p.onGuardarLista}
+        onCargar={(nombre) => {
+          p.onCargarLista(nombre);
+          setBusqueda("");
+          setCategoria(TU_CANASTA);
+        }}
+        onBorrar={p.onBorrarLista}
+      />
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor="buscar" className="text-sm font-medium text-tinta-suave">
@@ -94,10 +112,13 @@ export function Canasta({ genericos, items, presupuesto, onSumar, onRestar, onBa
                 role="tab"
                 aria-selected={activa}
                 onClick={() => setCategoria(c)}
-                className={`presionable h-9 shrink-0 rounded-full px-3.5 text-sm font-medium whitespace-nowrap ${
+                className={`presionable inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full pr-3.5 pl-2.5 text-sm font-medium whitespace-nowrap ${
                   activa ? "bg-tinta text-panel" : "border border-linea bg-ticket text-tinta hover:border-tinta-suave"
                 }`}
               >
+                <span className={activa ? "" : "text-acento"}>
+                  <IconoCategoria categoria={c} size={17} />
+                </span>
                 {c === TU_CANASTA ? `${TU_CANASTA} (${cantidadItems})` : c}
               </button>
             );
@@ -109,7 +130,7 @@ export function Canasta({ genericos, items, presupuesto, onSumar, onRestar, onBa
         <p className="rounded-caja border border-dashed border-linea px-4 py-6 text-center text-sm text-tinta-suave">
           {busqueda
             ? `No encontramos "${busqueda}". Probá con otra palabra.`
-            : "Todavía no agregaste nada. Probá con la canasta básica o elegí una categoría."}
+            : "Tu canasta está vacía. Elegí una categoría o cargá una de tus listas."}
         </p>
       ) : (
         <ul className="flex flex-col divide-y divide-linea rounded-caja border border-linea bg-ticket">
@@ -117,20 +138,25 @@ export function Canasta({ genericos, items, presupuesto, onSumar, onRestar, onBa
             const cantidad = items[g.producto_canonico_id];
             const elegido = cantidad !== undefined;
             return (
-              <li key={g.producto_canonico_id} className="flex items-center gap-3 px-3.5 py-2.5">
+              <li key={g.producto_canonico_id} className="flex items-center gap-3 px-3 py-2.5">
+                <span
+                  className={`inline-flex size-9 shrink-0 items-center justify-center rounded-control transition-colors duration-200 ${
+                    elegido ? "bg-acento text-sobre-acento" : "bg-acento-suave text-acento"
+                  }`}
+                >
+                  <IconoCategoria categoria={g.categoria} size={19} />
+                </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-[15px] leading-snug font-medium text-pretty">{g.nombre}</p>
                   <p className="text-[13px] text-tinta-suave">{pista(g)}</p>
                 </div>
                 {elegido ? (
-                  <div className="flex shrink-0 items-center">
-                    <button type="button" className={botonRedondo} aria-label={`Menos ${g.nombre}`} onClick={() => onRestar(g)}>
+                  <div className="aparecer flex shrink-0 items-center">
+                    <button type="button" className={botonRedondo} aria-label={`Menos ${g.nombre}`} onClick={() => p.onRestar(g)}>
                       <Minus size={18} weight="bold" aria-hidden />
                     </button>
-                    <span className="numeros w-16 text-center text-sm font-medium" aria-live="polite">
-                      {formatoCantidad(cantidad, g.unidad_base)}
-                    </span>
-                    <button type="button" className={botonRedondo} aria-label={`Más ${g.nombre}`} onClick={() => onSumar(g)}>
+                    <Cantidad cantidad={cantidad} g={g} />
+                    <button type="button" className={botonRedondo} aria-label={`Más ${g.nombre}`} onClick={() => p.onSumar(g)}>
                       <Plus size={18} weight="bold" aria-hidden />
                     </button>
                   </div>
@@ -139,7 +165,7 @@ export function Canasta({ genericos, items, presupuesto, onSumar, onRestar, onBa
                     type="button"
                     className={`${botonRedondo} text-acento`}
                     aria-label={`Agregar ${g.nombre}`}
-                    onClick={() => onSumar(g)}
+                    onClick={() => p.onSumar(g)}
                   >
                     <Plus size={18} weight="bold" aria-hidden />
                   </button>
@@ -162,8 +188,8 @@ export function Canasta({ genericos, items, presupuesto, onSumar, onRestar, onBa
             inputMode="numeric"
             min={0}
             step={100}
-            value={presupuesto ?? ""}
-            onChange={(e) => onPresupuesto(e.target.value ? Number(e.target.value) : null)}
+            value={p.presupuesto ?? ""}
+            onChange={(e) => p.onPresupuesto(e.target.value ? Number(e.target.value) : null)}
             className="numeros h-11 w-full rounded-control border border-linea bg-ticket pr-3 pl-8 text-[15px] outline-none focus-visible:border-acento"
           />
         </div>

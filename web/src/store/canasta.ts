@@ -2,7 +2,6 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 import type { Generico } from "../lib/api";
-import { CANASTA_BASICA } from "../lib/canastaBasica";
 import { cantidadInicial, paso } from "../lib/pasos";
 
 export interface Ubicacion {
@@ -12,17 +11,28 @@ export interface Ubicacion {
   lon: number;
 }
 
+/** Una compra que el usuario guardó para cargarla con un toque. */
+export interface Lista {
+  nombre: string;
+  items: Record<number, number>;
+  guardada: string; // fecha ISO
+}
+
 interface EstadoCanasta {
   ubicacion: Ubicacion | null;
   radioKm: number;
   /** producto_canonico_id → cantidad en la unidad base */
   items: Record<number, number>;
   presupuesto: number | null;
+  listas: Lista[];
   elegirUbicacion: (u: Ubicacion) => void;
   setRadio: (km: number) => void;
   sumar: (g: Generico) => void;
   restar: (g: Generico) => void;
-  cargarBasica: (genericos: Generico[]) => void;
+  /** Guarda la canasta actual; si ya hay una lista con ese nombre, la actualiza. */
+  guardarLista: (nombre: string) => void;
+  cargarLista: (nombre: string) => void;
+  borrarLista: (nombre: string) => void;
   vaciar: () => void;
   setPresupuesto: (monto: number | null) => void;
 }
@@ -44,6 +54,7 @@ export const useCanasta = create<EstadoCanasta>()(
       radioKm: 5,
       items: {},
       presupuesto: null,
+      listas: [],
 
       elegirUbicacion: (ubicacion) => set({ ubicacion }),
       setRadio: (radioKm) => set({ radioKm }),
@@ -66,20 +77,32 @@ export const useCanasta = create<EstadoCanasta>()(
           return { items: resto };
         }),
 
-      cargarBasica: (genericos) =>
-        set(() => {
-          const porNombre = new Map(genericos.map((g) => [g.nombre, g]));
-          const items: Record<number, number> = {};
-          for (const [nombre, cantidad] of CANASTA_BASICA) {
-            const g = porNombre.get(nombre);
-            if (g) items[g.producto_canonico_id] = cantidad;
-          }
-          return { items };
+      guardarLista: (nombre) =>
+        set(({ items, listas }) => {
+          const limpio = nombre.trim();
+          if (!limpio || Object.keys(items).length === 0) return {};
+          const nueva: Lista = { nombre: limpio, items: { ...items }, guardada: new Date().toISOString() };
+          const otras = listas.filter((l) => l.nombre !== limpio);
+          return { listas: [nueva, ...otras] }; // la más reciente primero
         }),
+
+      cargarLista: (nombre) =>
+        set(({ listas }) => {
+          const lista = listas.find((l) => l.nombre === nombre);
+          return lista ? { items: { ...lista.items } } : {};
+        }),
+
+      borrarLista: (nombre) => set(({ listas }) => ({ listas: listas.filter((l) => l.nombre !== nombre) })),
 
       vaciar: () => set({ items: {} }),
       setPresupuesto: (monto) => set({ presupuesto: monto && monto > 0 ? monto : null }),
     }),
-    { name: "canasta-uy", storage: almacenamiento },
+    {
+      name: "canasta-uy",
+      storage: almacenamiento,
+      // Versión 1 agrega las listas guardadas; lo guardado antes sigue valiendo
+      version: 1,
+      migrate: (guardado) => ({ listas: [], ...(guardado as object) }) as unknown as EstadoCanasta,
+    },
   ),
 );

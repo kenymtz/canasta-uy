@@ -10,6 +10,31 @@ const PANTALLAS = [
   { nombre: "celular", viewport: { width: 390, height: 844 }, paginaCompleta: true, isMobile: true },
 ];
 
+// Listas de ejemplo que quedan guardadas antes de sacar las capturas
+const LISTAS = {
+  "Compra del mes": [
+    ["Arroz blanco", 2], ["Fideos semolados", 1], ["Aceite de girasol", 0.9], ["Azúcar", 1],
+    ["Yerba mate", 1], ["Harina de trigo 0000", 1], ["Huevos", 12], ["Manteca", 0.2],
+    ["Carne picada", 1], ["Pollo entero", 1.5], ["Papa", 2], ["Tomate", 1], ["Manzana", 1],
+    ["Detergente para vajilla", 1], ["Hipoclorito de sodio", 1], ["Papel higiénico", 120],
+  ],
+  "Asado del domingo": [["Aguja vacuna", 2], ["Chorizos", 1], ["Pan flauta", 0.5], ["Vino tinto", 1]],
+};
+
+async function guardarListas(pagina) {
+  await pagina.evaluate(async (listas) => {
+    const genericos = await (await fetch("/api/genericos")).json();
+    const id = Object.fromEntries(genericos.map((g) => [g.nombre, g.producto_canonico_id]));
+    const guardadas = Object.entries(listas).map(([nombre, productos]) => ({
+      nombre,
+      items: Object.fromEntries(productos.filter(([n]) => id[n]).map(([n, c]) => [id[n], c])),
+      guardada: new Date().toISOString(),
+    }));
+    const estado = { ubicacion: null, radioKm: 5, items: {}, presupuesto: null, listas: guardadas };
+    localStorage.setItem("canasta-uy", JSON.stringify({ state: estado, version: 1 }));
+  }, LISTAS);
+}
+
 const navegador = await chromium.launch();
 const errores = [];
 
@@ -28,15 +53,20 @@ for (const pantalla of PANTALLAS) {
     pagina.on("pageerror", (e) => errores.push(`[${pantalla.nombre}/${tema}] ${e.message}`));
 
     await pagina.goto(url, { waitUntil: "networkidle" });
+    await guardarListas(pagina);
+    await pagina.reload({ waitUntil: "networkidle" });
     await pagina.getByLabel("Departamento").selectOption("Salto");
-    await pagina.getByRole("button", { name: "Canasta básica" }).click();
+    await pagina.getByRole("button", { name: /^Compra del mes/ }).click();
     await pagina.getByRole("article", { name: /Ticket de/ }).waitFor({ timeout: 15000 });
     await pagina.waitForTimeout(1500); // que terminen de cargar los mosaicos del mapa
 
     const base = `${salida}/${pantalla.nombre}-${tema === "light" ? "claro" : "oscuro"}`;
     await pagina.getByRole("article", { name: /Ticket de/ }).screenshot({ path: `${base}-ticket.png` });
     // Tocar botones desplaza la página: se vuelve arriba para ver el mapa
-    await pagina.evaluate(() => window.scrollTo(0, 0));
+    await pagina.evaluate(() => {
+      window.scrollTo(0, 0);
+      document.querySelector("aside")?.scrollTo(0, 0); // en escritorio el panel tiene su propio scroll
+    });
     await pagina.waitForTimeout(300);
     await pagina.screenshot({ path: `${base}.png` });
     console.log("captura:", `${base}.png`);

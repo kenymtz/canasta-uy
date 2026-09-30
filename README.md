@@ -130,7 +130,7 @@ docker compose logs jupyter
 - [x] Categorías genéricas sin marca (137 productos en 10 categorías) y precio por unidad base
 - [x] Consulta de canasta: costo por comercio, cobertura, faltantes y presupuesto
 - [x] API (FastAPI) con validación, conexión de solo lectura y tests
-- [x] Web con mapa interactivo (MapLibre + OpenFreeMap) y resultados en forma de ticket
+- [x] Web con mapa interactivo (MapLibre + OpenFreeMap), resultados en forma de ticket y listas guardadas
 - [ ] Cuentas de usuario y carga de tickets (QR del CFE o foto con IA)
 - [ ] Comparación con la compra anterior
 - [ ] Controles de calidad guardados por carga

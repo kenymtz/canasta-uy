@@ -13,8 +13,22 @@ import { useCanasta } from "./store/canasta";
 const Mapa = lazy(() => import("./components/Mapa").then((m) => ({ default: m.Mapa })));
 
 export default function App() {
-  const { ubicacion, radioKm, items, presupuesto, elegirUbicacion, setRadio, sumar, restar, cargarBasica, vaciar, setPresupuesto } =
-    useCanasta();
+  const {
+    ubicacion,
+    radioKm,
+    items,
+    presupuesto,
+    listas,
+    elegirUbicacion,
+    setRadio,
+    sumar,
+    restar,
+    vaciar,
+    setPresupuesto,
+    guardarLista,
+    cargarLista,
+    borrarLista,
+  } = useCanasta();
   const [ultimoPrecio, setUltimoPrecio] = useState<string | null>(null);
   const [ciudades, setCiudades] = useState<Ciudad[]>([]);
   const [comercios, setComercios] = useState<Comercio[]>([]);
@@ -54,7 +68,7 @@ export default function App() {
     // Escritorio: mapa fijo a la izquierda y panel con scroll a la derecha.
     // Celular: mapa arriba y el panel encima, con esquinas redondeadas, como una hoja.
     <div className="min-h-[100dvh] lg:grid lg:h-[100dvh] lg:grid-cols-[minmax(0,1fr)_460px]">
-      <section aria-label="Mapa de comercios" className="sticky top-0 h-[40dvh] lg:static lg:h-full">
+      <section aria-label="Mapa de comercios" className="sticky top-0 h-[40dvh] lg:relative lg:h-full">
         <Suspense fallback={<div className="h-full w-full bg-fondo" />}>
           <Mapa
             centro={ubicacion}
@@ -66,9 +80,19 @@ export default function App() {
             onElegirPunto={elegirPunto}
           />
         </Suspense>
+        {/* Sombra donde el panel se apoya sobre el mapa: hace que se note el borde dentado */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-linear-to-t from-[rgb(20_32_27_/_0.14)] to-transparent lg:inset-x-auto lg:inset-y-0 lg:right-0 lg:h-auto lg:w-10 lg:bg-linear-to-l"
+        />
       </section>
-      <aside className="relative -mt-5 flex flex-col gap-8 rounded-t-[20px] bg-panel px-5 pt-7 pb-16 lg:mt-0 lg:overflow-y-auto lg:rounded-none lg:px-8 lg:pt-10">
-        <Encabezado ultimoPrecio={ultimoPrecio} />
+      <aside className="panel-cortado relative -mt-5 flex flex-col gap-8 bg-panel px-5 pt-8 pb-16 lg:z-10 lg:mt-0 lg:-ml-2 lg:overflow-y-auto lg:px-8 lg:pt-10 lg:pl-10">
+        <Encabezado
+          ultimoPrecio={ultimoPrecio}
+          comercios={ciudades.reduce((total, c) => total + c.comercios, 0)}
+          productos={genericos.length}
+          departamentos={new Set(ciudades.map((c) => c.departamento)).size}
+        />
         <Ubicacion
           ciudades={ciudades}
           ubicacion={ubicacion}
@@ -80,11 +104,14 @@ export default function App() {
           genericos={genericos}
           items={items}
           presupuesto={presupuesto}
+          listas={listas}
           onSumar={sumar}
           onRestar={restar}
-          onBasica={() => cargarBasica(genericos)}
           onVaciar={vaciar}
           onPresupuesto={setPresupuesto}
+          onGuardarLista={guardarLista}
+          onCargarLista={cargarLista}
+          onBorrarLista={borrarLista}
         />
         <Resultados
           fase={cotizacion.fase}
