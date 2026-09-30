@@ -10,6 +10,13 @@ Precios al Consumidor): 27 millones de precios de 2025 en más de 800 comercios 
 
 > 🚧 Proyecto en construcción. Ver [hoja de ruta](#hoja-de-ruta).
 
+![Canasta UY en la computadora: mapa de Salto con los totales de cada comercio y el panel para armar la canasta](docs/img/web-escritorio.png)
+
+<p align="center">
+  <img src="docs/img/web-celular.png" width="300" alt="Canasta UY en el celular, modo oscuro">
+  <img src="docs/img/web-ticket.png" width="300" alt="Ticket del comercio que más conviene, con cada producto, cuánto comprar y el total">
+</p>
+
 ## Qué resuelve
 
 Para saber dónde conviene comprar, hay que comparar la **canasta completa**, no un
@@ -43,7 +50,7 @@ flowchart LR
     SIPC --> ETL --> RAW
     TICKET --> IA --> RAW
 
-    MART --> API["API<br/>FastAPI"] --> WEB["Web<br/>mapa + canasta"]
+    MART --> API["API<br/>FastAPI"] --> WEB["Web<br/>React + MapLibre"]
     MART --> MB["Metabase<br/>análisis"]
 ```
 
@@ -76,7 +83,7 @@ instalarlo ni armar un entorno virtual.
 
 ```bash
 cp .env.example .env              # y cambiá POSTGRES_PASSWORD
-docker compose up -d              # Postgres, Metabase y la API
+docker compose up -d              # Postgres, Metabase, la API y la web
 
 # Pipeline del SIPC: descarga (~2 GB), raw, limpieza a core y catálogo de genéricos
 docker compose run --rm pipelines python -m pipelines.fuentes.sipc
@@ -91,6 +98,7 @@ docker compose logs jupyter
 
 | Servicio | URL |
 |---|---|
+| **Web** | http://localhost:5173 |
 | API (documentación interactiva) | http://localhost:8000/docs |
 | Metabase | http://localhost:3000 |
 | Postgres | `localhost:5433` (usuario y base según `.env`) |
@@ -107,6 +115,7 @@ docker compose logs jupyter
 ├── pipelines/fuentes/       # ingesta por fuente (SIPC)
 ├── api/                     # API (FastAPI): ciudades, genéricos, comercios y cotización
 ├── tests/                   # tests de la API
+├── web/                     # web (React + Vite): mapa, canasta y tickets
 ├── docs/                    # contexto del proyecto y fuentes de datos
 ├── notebooks/               # exploración de datos
 ├── eval/                    # conjuntos de prueba y métricas
@@ -121,7 +130,7 @@ docker compose logs jupyter
 - [x] Categorías genéricas sin marca (137 productos en 10 categorías) y precio por unidad base
 - [x] Consulta de canasta: costo por comercio, cobertura, faltantes y presupuesto
 - [x] API (FastAPI) con validación, conexión de solo lectura y tests
-- [ ] Web con mapa interactivo (Leaflet + OpenStreetMap)
+- [x] Web con mapa interactivo (MapLibre + OpenFreeMap) y resultados en forma de ticket
 - [ ] Cuentas de usuario y carga de tickets (QR del CFE o foto con IA)
 - [ ] Comparación con la compra anterior
 - [ ] Controles de calidad guardados por carga

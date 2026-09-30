@@ -14,7 +14,7 @@
   --color-tinta-suave: #56645e;
   --color-linea: #d3dcd8;
   --color-acento: #167a4f;
-  --color-acento-suave: #dcefe5;
+  --color-acento-suave: #e2f2e9; /* 4,6:1 con el acento: contraste AA */
   --color-sobre-acento: #f6fbf8;
   --color-alerta: #a3401f;
 
@@ -129,4 +129,27 @@ body {
 .maplibregl-ctrl-attrib {
   font-family: var(--font-sans);
   font-size: 11px;
+}
+
+/* Controles de MapLibre (zoom y créditos) con los colores de la web, también en oscuro */
+.maplibregl-ctrl-group,
+.maplibregl-ctrl-attrib.maplibregl-compact {
+  background: var(--color-ticket);
+  color: var(--color-tinta);
+}
+
+.maplibregl-ctrl-attrib a {
+  color: inherit;
+}
+
+@media (prefers-color-scheme: dark) {
+  .maplibregl-ctrl-group button + button {
+    border-top-color: var(--color-linea);
+  }
+
+  /* Los íconos de MapLibre son imágenes negras: se invierten para que se vean */
+  .maplibregl-ctrl-group .maplibregl-ctrl-icon,
+  .maplibregl-ctrl-attrib-button {
+    filter: invert(1);
+  }
 }

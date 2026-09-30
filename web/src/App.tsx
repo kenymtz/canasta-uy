@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 
 import { Canasta } from "./components/Canasta";
 import { Encabezado } from "./components/Encabezado";
-import { Mapa } from "./components/Mapa";
 import { Resultados } from "./components/Resultados";
 import { Resumen } from "./components/Resumen";
 import { PUNTO_EN_EL_MAPA, Ubicacion } from "./components/Ubicacion";
 import { api, type Ciudad, type Comercio, type Generico } from "./lib/api";
 import { useCotizacion } from "./hooks/useCotizacion";
 import { useCanasta } from "./store/canasta";
+
+// MapLibre pesa unos 800 KB: se carga aparte para que el panel aparezca enseguida
+const Mapa = lazy(() => import("./components/Mapa").then((m) => ({ default: m.Mapa })));
 
 export default function App() {
   const { ubicacion, radioKm, items, presupuesto, elegirUbicacion, setRadio, sumar, restar, cargarBasica, vaciar, setPresupuesto } =
@@ -53,15 +55,17 @@ export default function App() {
     // Celular: mapa arriba y el panel encima, con esquinas redondeadas, como una hoja.
     <div className="min-h-[100dvh] lg:grid lg:h-[100dvh] lg:grid-cols-[minmax(0,1fr)_460px]">
       <section aria-label="Mapa de comercios" className="sticky top-0 h-[40dvh] lg:static lg:h-full">
-        <Mapa
-          centro={ubicacion}
-          radioKm={radioKm}
-          comercios={comercios}
-          resultados={cotizacion.resultados}
-          seleccionado={seleccionado}
-          onSeleccionar={setSeleccionado}
-          onElegirPunto={elegirPunto}
-        />
+        <Suspense fallback={<div className="h-full w-full bg-fondo" />}>
+          <Mapa
+            centro={ubicacion}
+            radioKm={radioKm}
+            comercios={comercios}
+            resultados={cotizacion.resultados}
+            seleccionado={seleccionado}
+            onSeleccionar={setSeleccionado}
+            onElegirPunto={elegirPunto}
+          />
+        </Suspense>
       </section>
       <aside className="relative -mt-5 flex flex-col gap-8 rounded-t-[20px] bg-panel px-5 pt-7 pb-16 lg:mt-0 lg:overflow-y-auto lg:rounded-none lg:px-8 lg:pt-10">
         <Encabezado ultimoPrecio={ultimoPrecio} />

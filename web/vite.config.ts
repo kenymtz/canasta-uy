@@ -4,6 +4,8 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // El único archivo grande es el del mapa (MapLibre, ~1 MB), y se carga aparte
+  build: { chunkSizeWarningLimit: 1100 },
   server: {
     host: true,
     port: 5173,

@@ -262,8 +262,16 @@ Para el objetivo actual (web de compras al menor costo en Uruguay):
    Conexión de solo lectura (`default_transaction_read_only`, verificado). 14 tests en
    `tests/test_api.py` contra la base real: `docker compose run --rm pipelines pytest -v`.
    Pendiente para el despliegue: un rol de Postgres propio con solo SELECT.
-4. **Web:** mapa (Leaflet + OpenStreetMap) para elegir la ubicación, armar la canasta y ver
-   los resultados.
+4. ~~Web~~ ✅ (30/09/2026): carpeta `web/` (React 19 + Vite 8 + TypeScript, Tailwind v4,
+   MapLibre + OpenFreeMap, NumberFlow, Phosphor, zustand), servicio `web` del compose
+   (http://localhost:5173, proxy `/api` → API). Diseño "mapa + ticket" aprobado por Augusto
+   (spec en `docs/superpowers/specs/2026-09-30-web-canasta-design.md`, plan en
+   `docs/superpowers/plans/2026-09-30-web-canasta.md`). Hechos: etiquetas del mapa honestas
+   (los comercios incompletos dicen "Faltan N" en lugar de un precio engañoso), sin solapes,
+   barra de resumen fija, canasta recordada en el navegador, modo claro y oscuro, contraste
+   AA verificado, estados de vacío/error/sin comercios. 18 tests de Vitest y capturas con
+   Playwright (`web/scripts/capturas.mjs`, imagen `mcr.microsoft.com/playwright:v1.63.0-noble`).
+   Skills de diseño instaladas en `~/.claude/skills` (taste-skill, Emil Kowalski, find-skills).
 5. **Usuarios y tickets:** cuentas, subir el ticket (investigar el QR del CFE de la DGI;
    si no alcanza, foto + extracción con IA), comparar con la compra anterior.
 6. Calidad: guardar el reporte de cada carga en una tabla. Despliegue en un VPS.
