@@ -147,7 +147,7 @@ services:
     environment:
       WEB_URL: http://web:5173
       CATALOGO: /datos/precios.json
-    command: sh -c "npm install --no-audit --no-fund && node generar.mjs $${CANTIDAD:-48} && node evaluar.mjs"
+    command: sh -c "npm install --no-audit --no-fund && node generar.mjs $${CANTIDAD:-48} && node variar.mjs $${VERSIONES:-12} && node evaluar.mjs"
     volumes:
       - ./eval/boletas:/eval
       - ./web/public/datos:/datos:ro

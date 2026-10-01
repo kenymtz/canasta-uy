@@ -1,6 +1,6 @@
 // Pasa cada boleta por el mismo lector de la web y mide qué tan bien lee.
 //
-//   node evaluar.mjs [carpeta ...]          (por defecto: generadas y reales)
+//   node evaluar.mjs [carpeta ...]          (por defecto: generadas, reales y variantes)
 //
 // Usa el código de la web tal cual: abre la web de desarrollo (WEB_URL) y, dentro de la
 // página, importa src/lib/lectorBoleta.ts (foto → texto) y src/lib/boleta.ts (texto →
@@ -19,7 +19,7 @@ import { basename, join } from "node:path";
 import { chromium } from "playwright";
 
 const WEB = process.env.WEB_URL ?? "http://web:5173";
-const CARPETAS = process.argv.slice(2).length ? process.argv.slice(2) : ["generadas", "reales"];
+const CARPETAS = process.argv.slice(2).length ? process.argv.slice(2) : ["generadas", "reales", "variantes"];
 const PARECIDO_MINIMO = 0.8;
 
 // ─── Comparar descripciones ──────────────────────────────────────────────────
@@ -109,7 +109,8 @@ for (const carpeta of CARPETAS) {
       continue;
     }
     const esperado = JSON.parse(readFileSync(respuesta, "utf-8"));
-    const real = carpeta.endsWith("reales");
+    // Las fotos reales y sus versiones pueden tener datos personales
+    const real = carpeta.endsWith("reales") || carpeta.endsWith("variantes");
     const formas = esperado.recorte ? ["recorte", "completa"] : ["completa"];
     for (const forma of formas) {
       const inicio = Date.now();
@@ -117,8 +118,8 @@ for (const carpeta of CARPETAS) {
       const nota = puntuar(esperado.productos, lectura.productos, esperado.sensibles ?? []);
       resultados.push({
         imagen: join(carpeta, imagen),
-        formato: esperado.formato ?? "real",
-        degradacion: esperado.degradacion ?? "real",
+        formato: esperado.formato ?? `real:${imagen.replace(/\.(jpe?g|png)$/i, "")}`,
+        degradacion: esperado.degradacion ?? "original",
         forma,
         segundos: Math.round((Date.now() - inicio) / 100) / 10,
         ...nota,
@@ -166,6 +167,15 @@ if (resultados.length) {
   console.table(porForma);
   console.log("Por nivel de foto (solo recorte)");
   console.table(resumir((r) => (r.forma === "recorte" ? r.degradacion : "—")).filter((g) => g.grupo !== "—"));
+  const reales = resultados.filter((r) => r.formato.startsWith("real:"));
+  if (reales.length) {
+    console.log("Fotos reales y sus versiones, por nivel (recorte y foto completa)");
+    console.table(
+      resumir((r) => (r.formato.startsWith("real:") ? `${r.formato} ${r.degradacion} ${r.forma}` : "—")).filter(
+        (g) => g.grupo !== "—",
+      ),
+    );
+  }
   console.log("Por formato de ticket (solo recorte)");
   console.table(resumir((r) => (r.forma === "recorte" ? r.formato : "—")).filter((g) => g.grupo !== "—"));
 

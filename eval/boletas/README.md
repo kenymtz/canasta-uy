@@ -1,5 +1,10 @@
 # Banco de pruebas del lector de boletas
 
+**La idea, en simple:** es tomarle un examen al lector. La foto es la pregunta; el `.json` de
+al lado es la hoja con las respuestas correctas; el evaluador le da la foto al lector, compara
+lo que contestó con las respuestas y le pone nota. Para que la nota valga hacen falta muchos
+exámenes: por eso se generan muchas fotos.
+
 Mide qué tan bien la web lee los productos de una foto de boleta, para que cada cambio en el
 lector se pueda **medir** en lugar de adivinar.
 
@@ -36,7 +41,22 @@ Tarda unos 2 segundos por boleta. El detalle de cada lectura queda en
 Cada imagen se lee de dos formas: **recorte** (solo la zona de productos, como se le pide al
 usuario) y **completa** (la foto entera, como hace mucha gente igual).
 
-## Fotos reales
+## Probar con una boleta tuya, paso a paso
+
+1. Pasá la foto **original** del celular a `eval/boletas/reales/` (por ejemplo
+   `reales/tata-01.jpg`). Que sea la original: si pasa por WhatsApp o un chat se achica y
+   las comas de los precios desaparecen.
+2. Al lado, creá `reales/tata-01.json` con lo que dice la boleta (las respuestas correctas):
+   los productos con su precio y, si querés, los datos que nunca deberían aparecer.
+3. Corré `docker compose run --rm eval-boletas`. Además de las boletas falsas, arma
+   12 versiones "parecidas" de cada foto tuya (`variar.mjs`: más giradas, oscuras, borrosas,
+   chicas, con sombra) y le toma el examen al lector con todas.
+4. Mirá la tabla **Fotos reales y sus versiones**: qué porcentaje de productos encontró y
+   cuántos precios leyó bien.
+
+Para más versiones por foto: `docker compose run --rm -e VERSIONES=40 eval-boletas`.
+
+## Fotos reales: el formato del `.json`
 
 Para probar con boletas de verdad, poné las fotos en `reales/` con un `.json` del mismo nombre:
 
@@ -71,6 +91,11 @@ resultados, solo los productos.
 
 Antes de los arreglos que encontró este banco (espacio después de la coma, signo al final del
 monto, productos en dos renglones) era 56 % con fotos limpias y 40 % en total. Fugas: 0.
+
+Primera boleta real (Macromercado, 01/10/2026, foto achicada por el chat a 900 px de ancho):
+**0 %** con la original y sus 12 versiones. Las descripciones se leen bastante bien, pero los
+precios no: con letras de 10 px de alto la coma desaparece ("45,28" sale "4528") y la columna
+del monto, gris clara, casi no se lee. Falta probar con la foto original del celular.
 
 Lo que falta: las fotos muy dañadas (arrugas fuertes, sombra, poca resolución). Ahí el
 problema es la lectura de la imagen, no el filtro: por eso la web deja corregir la lista
