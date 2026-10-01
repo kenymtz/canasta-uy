@@ -403,6 +403,12 @@ de mostrarla (contacto en privacidad: **uycanasta@gmail.com**; datos para la URC
 `docs/URCDP.md`; README y capturas al día), 3) precios de frutas y verduras (el SIPC no los
 trae; investigar el Mercado Modelo), 4) cosas chicas (en qué cuenta de Cloudflare quedó el
 proyecto `canastauy`; URL del SIPC 2027 cuando salga).
+Hecho el 01/10/2026: contacto en privacidad, `docs/URCDP.md`, README con capturas nuevas. Falta
+de Augusto: presentar el trámite de la URCDP y activar la verificación en dos pasos (Supabase,
+Google, GitHub, Cloudflare). Frutas y verduras: la fuente es la UAM (ver `docs/FUENTES.md`);
+**en espera de que la UAM responda** si se pueden reutilizar sus precios. SIPC de un año
+nuevo: la actualización mensual lo detecta sola (`pipelines/fuentes/sipc_anio_nuevo.py`) y
+abre un issue en GitHub con lo que hay que hacer.
 
 5. **Usuarios y tickets:** cuentas, subir el ticket (investigar el QR del CFE de la DGI;
    si no alcanza, foto + extracción con IA), comparar con la compra anterior.

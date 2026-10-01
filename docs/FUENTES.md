@@ -51,6 +51,19 @@ Archivos que usa `pipelines/fuentes/sipc.py`:
 
 ## Para más adelante (Uruguay)
 
+- **Frutas y verduras: UAM (ex Mercado Modelo) y Observatorio Granjero (UAM + MGAP).** El SIPC no
+  trae precios de 31 frutas y verduras. La UAM publica el **precio mayorista** (lo que pagan las
+  verdulerías, igual para todo el país, no por comercio), lunes y jueves, en PDF:
+  https://uam.com.uy/boletin-de-precios-mayoristas/ (por ejemplo
+  `wp-content/uploads/2026/09/Boletin-de-precios-28-de-setiembre-de-2026.pdf`). Historial en
+  Excel en una carpeta pública de Google Drive: https://bit.ly/ObservatorioGranjero. También
+  publica la brecha entre precio mayorista y minorista y una "Lista Inteligente" quincenal.
+  **No está en el catálogo de datos abiertos y no dice bajo qué licencia se puede reutilizar**
+  (su `robots.txt` no bloquea nada). Decisión de Augusto (01/10/2026): **no usarla hasta que la
+  UAM responda** un mail pidiendo el visto bueno (informaciondemercados@uam.com.uy). Si dicen
+  que sí, mostrarla como "precio de referencia" aparte, sin mezclarla con los precios por
+  comercio del SIPC ni cambiar qué comercio conviene.
+
 - **Open Food Facts** (productos por código de barras, nombre, marca y tamaño; licencia ODbL):
   https://world.openfoodfacts.org — útil si los tickets traen EAN.
 - **Open Prices** (precios colaborativos de Open Food Facts, con API): https://prices.openfoodfacts.org
