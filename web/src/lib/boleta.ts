@@ -41,8 +41,9 @@ const PRECIO_AL_FINAL = /(-?\d{1,3}(?:[.,]\d{3})+[.,]\s?\d{2}|-?\d+[.,]\s?\d{2})
 const COLUMNAS_ANTES_DEL_MONTO = /(\s+-?\d+(?:[.,]\d{1,3})?){1,2}\s*$/;
 // Productos en dos renglones: el nombre arriba y "2 x 176,55      353,10" abajo
 const CANTIDAD_POR_UNITARIO = /^\d+(?:[.,]\d+)?\s*[xX×*]/;
-// Código de artículo al principio ("31410 SAL SEK FINA..."): no dice nada del producto
-const CODIGO_AL_PRINCIPIO = /^\d{3,6}\s+/;
+// Código de artículo al principio ("31410 SAL SEK FINA..."): no dice nada del producto. El
+// lector a veces cambia la primera cifra por una letra o un signo ("H575", "%575")
+const CODIGO_AL_PRINCIPIO = /^[^\s\d]?\d{3,6}\s+/;
 // Una descripción de producto tiene palabras; "TM." o "a 82,17" son ruido del lector
 const MINIMO_DE_LETRAS = 3;
 const NUMERO_LARGO = /\d(?:[\s.-]?\d){6,}/g; // 7 dígitos o más, con o sin separadores
@@ -60,6 +61,43 @@ function limpiar(descripcion: string): string {
     .replace(/[\s—–_|]+$/, "") // rayas y separadores que el lector agrega al final
     .replace(/\s{2,}/g, " ")
     .trim();
+}
+
+// ─── Columnas de cantidad y precio ───────────────────────────────────────────
+// En las boletas con columnas la cantidad trae 3 decimales ("1,000", "0,794") y los precios 2.
+// En una foto chica (WhatsApp, captura) la coma suele desaparecer: "1000  4528" es
+// 1,000 × 45,28. Con esa estructura se recupera el precio, y cantidad × unitario = monto
+// sirve de control.
+const NUMEROS_AL_FINAL = /(?:\s+\d+(?:[.,]\d+)?){2,3}\s*[A-Za-z*?]?\s*$/;
+const NUMEROS_ANTES_DEL_PRECIO = /(?:\s+\d+(?:[.,]\d+)?){1,2}\s*$/;
+const PRECIO_MAXIMO = 20000; // más que esto en un renglón es un número de otra cosa
+
+/** "1,000" o "0,794"; sin coma, "1000" o "0794" (los kilos enteros o menos de un kilo). */
+function aCantidad(t: string): number | null {
+  if (/^\d+[.,]\d{3}$/.test(t)) return Number(t.replace(",", "."));
+  if (/^\d{4}$/.test(t) && (t.startsWith("0") || t.endsWith("000"))) return Number(t) / 1000;
+  return null;
+}
+
+/** "45,28"; sin coma, "4528" (siempre dos decimales). */
+function aPrecio(t: string): number | null {
+  if (/^\d+[.,]\d{2}$/.test(t) || /^\d{3,6}$/.test(t)) return aNumero(t);
+  return null;
+}
+
+const redondear = (n: number) => Math.round(n * 100) / 100;
+const cierra = (cantidad: number, unitario: number, monto: number) =>
+  Math.abs(cantidad * unitario - monto) <= Math.max(0.05, monto * 0.01);
+
+/** Del final del renglón: "1000  4528" o "1000  4528  4528M" → el monto, si cierra. */
+function montoSinComa(numeros: string): number | null {
+  const [c, u, m] = numeros.trim().replace(/[A-Za-z*?]$/, "").trim().split(/\s+/);
+  const cantidad = aCantidad(c);
+  const unitario = aPrecio(u);
+  if (cantidad === null || unitario === null) return null;
+  if (m === undefined) return redondear(cantidad * unitario);
+  const monto = aPrecio(m);
+  return monto !== null && cierra(cantidad, unitario, monto) ? monto : null;
 }
 
 const letras = (texto: string) => texto.match(/\p{L}/gu)?.length ?? 0;
@@ -83,6 +121,16 @@ export function leerBoleta(texto: string): LecturaBoleta {
     }
 
     const precio = PRECIO_AL_FINAL.exec(linea);
+    const sinComa = precio ? null : NUMEROS_AL_FINAL.exec(linea);
+    const montoRecuperado = sinComa ? montoSinComa(sinComa[0]) : null;
+    if (sinComa && montoRecuperado !== null) {
+      const descripcion = limpiar(linea.slice(0, sinComa.index));
+      pendiente = null;
+      if (pareceProducto(descripcion) && montoRecuperado > 0 && montoRecuperado <= PRECIO_MAXIMO) {
+        productos.push({ descripcion, precio: montoRecuperado });
+      }
+      continue;
+    }
     if (!precio) {
       // Encabezados, direcciones, números de comprobante: no se guardan, pero puede ser el
       // nombre de un producto cuyo precio viene en el renglón de abajo
@@ -99,8 +147,14 @@ export function leerBoleta(texto: string): LecturaBoleta {
     }
     pendiente = null;
 
-    const valor = aNumero(precio[1]);
-    if (!pareceProducto(descripcion) || valor <= 0) continue;
+    let valor = aNumero(precio[1]);
+    // "0,794   160,70" sin el monto: el precio leído es el unitario y el monto es la cuenta
+    const antes = NUMEROS_ANTES_DEL_PRECIO.exec(antesDelPrecio)?.[0].trim().split(/\s+/);
+    if (antes?.length === 1) {
+      const cantidad = aCantidad(antes[0]);
+      if (cantidad !== null) valor = redondear(cantidad * valor);
+    }
+    if (!pareceProducto(descripcion) || valor <= 0 || valor > PRECIO_MAXIMO) continue;
     productos.push({ descripcion, precio: valor });
   }
 

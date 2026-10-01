@@ -378,6 +378,15 @@ Para el objetivo actual (web de compras al menor costo en Uruguay):
    encontrados (92 % con fotos limpias, 21 % con fotos muy dañadas) y 0 fugas. Decisión: un
    renglón que parece tarjeta tapada ("XxX 176") se borra aunque sea un producto mal leído.
    Las fotos reales van en `eval/boletas/reales/` (no se suben a GitHub).
+   Augusto (01/10/2026): la opción de subir una foto tiene que andar con fotos comprimidas
+   (WhatsApp, capturas), no solo con originales; si no, es poco fiable. Se agregó el nivel
+   "whatsapp" al banco (renglones de ~20 px como la boleta real) y `variar.mjs` (versiones
+   de cada foto real). Mejoras medidas: precios sin coma en columnas ("1000 4528" = 1,000 ×
+   45,28, con control cantidad × unitario = monto), monto calculado si falta su columna,
+   código de artículo mal leído ("H575") y niveles automáticos + ampliar a 1800 px
+   (`PREPARACION` en `lectorBoleta.ts`). Boleta real por WhatsApp: de 0 % a 67 % de precios
+   exactos leyendo el recorte. Pendiente: más boletas reales comprimidas de distintos
+   comercios; las falsas siguen siendo más fáciles que las reales.
 5. **Usuarios y tickets:** cuentas, subir el ticket (investigar el QR del CFE de la DGI;
    si no alcanza, foto + extracción con IA), comparar con la compra anterior.
 6. Calidad: guardar el reporte de cada carga en una tabla. Servidor propio cuando se pueda

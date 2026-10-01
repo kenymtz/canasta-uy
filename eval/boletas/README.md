@@ -80,23 +80,40 @@ Para probar con boletas de verdad, poné las fotos en `reales/` con un `.json` d
 datos personales. Por la misma razón, de las fotos reales no se guarda el texto leído en los
 resultados, solo los productos.
 
-## Resultados (01/10/2026, 48 boletas, leyendo el recorte)
+## Resultados
 
-| Nivel de foto | Encontrados | Precio ok | Basura x boleta |
-|---|---|---|---|
-| limpia | 92 % | 90 % | 0 |
-| leve | 89 % | 85 % | 0,1 |
-| media | 79 % | 72 % | 0,1 |
-| fuerte | 21 % | 15 % | 1,3 |
+Para probar otra forma de preparar la imagen sin tocar la web:
+`OCR_ANCHO=2400 OCR_NIVELES=0 docker compose run --rm eval-boletas` (ancho al que se amplía
+el recorte y porcentaje de niveles automáticos; ver `web/src/lib/lectorBoleta.ts`).
 
-Antes de los arreglos que encontró este banco (espacio después de la coma, signo al final del
-monto, productos en dos renglones) era 56 % con fotos limpias y 40 % en total. Fugas: 0.
+**01/10/2026**, 60 boletas falsas (cinco niveles de foto) + la boleta real de Macromercado y
+12 versiones, leyendo el recorte. Precio exacto:
 
-Primera boleta real (Macromercado, 01/10/2026, foto achicada por el chat a 900 px de ancho):
-**0 %** con la original y sus 12 versiones. Las descripciones se leen bastante bien, pero los
-precios no: con letras de 10 px de alto la coma desaparece ("45,28" sale "4528") y la columna
-del monto, gris clara, casi no se lee. Falta probar con la foto original del celular.
+| Nivel de foto | Antes (2400 px) | Ahora (1800 px + niveles) |
+|---|---|---|
+| limpia | 89 % | 93 % |
+| leve | 73 % | 70 % |
+| media | 57 % | 63 % |
+| fuerte | 9 % | 16 % |
+| whatsapp (renglones de ~20 px, JPG) | 81 % | 82 % |
+| **boleta real de Macromercado** (por WhatsApp, 900 px) | 0 % → 33 % | **67 %** |
 
-Lo que falta: las fotos muy dañadas (arrugas fuertes, sombra, poca resolución). Ahí el
-problema es la lectura de la imagen, no el filtro: por eso la web deja corregir la lista
-antes de guardar.
+Cómo se llegó ahí, paso a paso, con este banco:
+
+1. Espacio después de la coma, signo al final del monto y productos en dos renglones: de
+   56 % a 92 % con fotos limpias.
+2. Precios sin coma en boletas con columnas ("1000 4528" = 1,000 × 45,28) y el monto calculado
+   cuando falta su columna: la boleta real pasa de 0 % a 33 %.
+3. Niveles automáticos (la tinta gris del papel térmico pasa a negro) y menos ampliación: la
+   boleta real llega a 67 %.
+
+Lo que sigue flojo:
+
+- **Las boletas falsas son más fáciles que las reales**: con renglones del mismo tamaño, una
+  falsa da 82 % y la real 67 %. Las reales tienen tinta gris gastada, papel arrugado y letra
+  angosta. Hacen falta más boletas reales (de distintos comercios, mandadas por WhatsApp
+  como lo haría un usuario) para medir de verdad.
+- **Leer la foto entera en vez del recorte** empeora mucho la boleta real (0 %): con todo el
+  ticket la letra queda más chica. Por eso la web pide recortar los productos.
+- Volver a achicar una foto que ya vino por WhatsApp (las versiones de la boleta real) la
+  deja ilegible: ahí la única salida es escribir los productos a mano (la web lo permite).

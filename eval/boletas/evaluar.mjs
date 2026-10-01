@@ -21,6 +21,12 @@ import { chromium } from "playwright";
 const WEB = process.env.WEB_URL ?? "http://web:5173";
 const CARPETAS = process.argv.slice(2).length ? process.argv.slice(2) : ["generadas", "reales", "variantes"];
 const PARECIDO_MINIMO = 0.8;
+// Para probar otra preparación de la imagen sin tocar la web: OCR_ANCHO=2400 OCR_NIVELES=0
+const PREPARACION =
+  process.env.OCR_ANCHO || process.env.OCR_NIVELES
+    ? { ancho: Number(process.env.OCR_ANCHO ?? 1800), niveles: Number(process.env.OCR_NIVELES ?? 0.02) }
+    : null;
+if (PREPARACION) console.log("Preparación de prueba:", PREPARACION);
 
 // ─── Comparar descripciones ──────────────────────────────────────────────────
 const normalizar = (s) =>
@@ -83,17 +89,17 @@ async function leer(archivo, recorte) {
   const datos = readFileSync(archivo).toString("base64");
   const tipo = archivo.endsWith(".png") ? "image/png" : "image/jpeg";
   return pagina.evaluate(
-    async ({ datos, tipo, recorte }) => {
+    async ({ datos, tipo, recorte, preparacion }) => {
       const { leerTexto } = await import("/src/lib/lectorBoleta.ts");
       const { leerBoleta } = await import("/src/lib/boleta.ts");
       const img = new Image();
       img.src = `data:${tipo};base64,${datos}`;
       await img.decode();
       const zona = recorte ?? { x: 0, y: 0, ancho: img.naturalWidth, alto: img.naturalHeight };
-      const texto = await leerTexto(img, zona);
+      const texto = await leerTexto(img, zona, () => {}, preparacion ?? undefined);
       return { texto, ...leerBoleta(texto) };
     },
-    { datos, tipo, recorte },
+    { datos, tipo, recorte, preparacion: PREPARACION },
   );
 }
 

@@ -135,12 +135,15 @@ const DEGRADACIONES = {
   leve: { giro: 1.5, arrugas: 1, sombra: 0.15, desenfoque: 0.4, ruido: 8, ancho: 1200, calidad: 0.85 },
   media: { giro: 3, arrugas: 2.5, sombra: 0.3, desenfoque: 0.8, ruido: 14, ancho: 1000, calidad: 0.72 },
   fuerte: { giro: 5, arrugas: 4.5, sombra: 0.45, desenfoque: 1.2, ruido: 22, ancho: 850, calidad: 0.6 },
+  // Como llega por WhatsApp la foto de un ticket largo: tan achicada que entre renglón y
+  // renglón quedan unos 20 px (como en la boleta real de Macromercado) y JPG comprimido
+  whatsapp: { giro: 2, arrugas: 1.5, sombra: 0.2, desenfoque: 0.3, ruido: 8, renglon: [19, 24], calidad: 0.7 },
 };
 
 /** En el navegador: pone el ticket sobre un fondo, lo gira, lo arruga y lo saca como una foto JPG. */
-async function fotografiar(pagina, png, d, cajaProductos) {
+async function fotografiar(pagina, png, d, cajaProductos, renglonOriginal) {
   return pagina.evaluate(
-    async ({ png, d, caja, fondo, giro, fase }) => {
+    async ({ png, d, caja, fondo, giro, fase, renglonOriginal }) => {
       const img = new Image();
       img.src = "data:image/png;base64," + png;
       await img.decode();
@@ -201,7 +204,7 @@ async function fotografiar(pagina, png, d, cajaProductos) {
       }
 
       // Resolución de la foto (achicar) y compresión JPG
-      const escala = Math.min(1, d.ancho / W);
+      const escala = d.renglon ? Math.min(1, d.renglon / renglonOriginal) : Math.min(1, d.ancho / W);
       const foto = document.createElement("canvas");
       foto.width = Math.round(W * escala);
       foto.height = Math.round(H * escala);
@@ -239,6 +242,7 @@ async function fotografiar(pagina, png, d, cajaProductos) {
       fondo: elegir(["#5b1f22", "#2a2f45", "#6b5a45", "#3c4a3a", "#9a9a95"]),
       giro: d.giro ? entre(-d.giro, d.giro) : 0,
       fase: entre(0, 6.28),
+      renglonOriginal,
     },
   );
 }
@@ -270,7 +274,11 @@ for (let i = 0; i < CANTIDAD; i++) {
   const png = (await ticket.screenshot({ omitBackground: true })).toString("base64");
   // La captura sale al doble (deviceScaleFactor 2): la caja también
   const cajaPx = { x: caja.x * 2, y: caja.y * 2, ancho: caja.ancho * 2, alto: caja.alto * 2 };
-  const { jpg, recorte } = await fotografiar(pagina, png, DEGRADACIONES[degradacion], cajaPx);
+  // Alto de un renglón en la captura (al doble por deviceScaleFactor 2)
+  const renglonOriginal = await pagina.evaluate(() => parseFloat(getComputedStyle(document.getElementById("productos")).lineHeight) * 2);
+  const nivel = { ...DEGRADACIONES[degradacion] };
+  if (nivel.renglon) nivel.renglon = entre(...nivel.renglon);
+  const { jpg, recorte } = await fotografiar(pagina, png, nivel, cajaPx, renglonOriginal);
 
   const nombre = String(i + 1).padStart(3, "0");
   writeFileSync(`${SALIDA}/${nombre}.jpg`, Buffer.from(jpg, "base64"));

@@ -121,3 +121,39 @@ PALETA VACUNA SIN MARCA 1KG
     expect(leerBoleta("T.B.IM” 522,11").productos).toEqual([]);
   });
 });
+
+describe("leerBoleta con columnas cuando la foto es chica (WhatsApp, captura)", () => {
+  it("recupera el precio aunque el lector pierda las comas: 1000 × 4528 = 45,28", () => {
+    expect(leerBoleta("31407 SAL SEK GRUESA Y ODOFLIJORADA 500 GRS.        1000       4528").productos).toEqual([
+      { descripcion: "SAL SEK GRUESA Y ODOFLIJORADA 500 GRS.", precio: 45.28 },
+    ]);
+  });
+
+  it("con las tres columnas sin coma, usa el monto si cantidad × unitario cierra", () => {
+    expect(leerBoleta("SAL FINA YODADA 500 GRS 2000 4528 9056M").productos).toEqual([{ descripcion: "SAL FINA YODADA 500 GRS", precio: 90.56 }]);
+    // No cierra (2 × 45,28 no es 12,34): mejor no inventar un precio
+    expect(leerBoleta("SAL FINA YODADA 500 GRS 2000 4528 1234").productos).toEqual([]);
+  });
+
+  it("si falta la columna del monto, lo calcula: 0,794 kg × 160,70", () => {
+    expect(leerBoleta("96525 FIAMBRERIA LNETITOS DULCE DE MEMBRILLO 0,794 160,70").productos).toEqual([
+      { descripcion: "FIAMBRERIA LNETITOS DULCE DE MEMBRILLO", precio: 127.6 },
+    ]);
+  });
+
+  it("un número suelto sin coma no es un precio", () => {
+    expect(leerBoleta("ARROZ BLANCO 1KG 1000").productos).toEqual([]);
+    expect(leerBoleta("PROTECTOR SOLAR SPF 50 EUCERIN 150    362,26").productos).toEqual([
+      { descripcion: "PROTECTOR SOLAR SPF 50 EUCERIN", precio: 362.26 },
+    ]);
+  });
+});
+
+describe("leerBoleta y el código de artículo mal leído", () => {
+  it("saca el código aunque la primera cifra se lea como letra o signo", () => {
+    expect(leerBoleta("H575 FIAMBRERIA LNETITOS DULCE DE MEMBRILLO 0,794 160,70").productos[0].descripcion).toBe(
+      "FIAMBRERIA LNETITOS DULCE DE MEMBRILLO",
+    );
+    expect(leerBoleta("%575 FIAMBRERIA DULCE 127,60").productos[0].descripcion).toBe("FIAMBRERIA DULCE");
+  });
+});
