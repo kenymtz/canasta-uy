@@ -1,4 +1,4 @@
-import { Camera, FloppyDisk, MagnifyingGlass, QrCode, Storefront } from "@phosphor-icons/react";
+import { Camera, FloppyDisk, MagnifyingGlass, QrCode, Storefront, WarningCircle } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
 
 import { api, type Comercio } from "../lib/api";
@@ -205,6 +205,16 @@ export function ConfirmarCompra({ borrador, ubicacion, onIrA, onGuardada, onDesc
         </div>
       </dl>
 
+      {qr && productos && Math.abs(sumaProductos - qr.monto) > Math.max(1, qr.monto * 0.02) && (
+        <p className="flex gap-1.5 text-[13px] leading-snug text-tinta" role="status">
+          <WarningCircle size={16} className="mt-px shrink-0 text-alerta" aria-hidden />
+          <span>
+            Los productos suman <strong className="numeros font-medium">{formatoPlata(sumaProductos)}</strong> y el ticket
+            dice <strong className="numeros font-medium">{formatoPlata(qr.monto)}</strong>. Puede que falte alguno o que
+            un precio se haya leído mal: podés corregirlos en <strong className="font-medium">Leer la boleta</strong>.
+          </span>
+        </p>
+      )}
       {!productos && (
         <p className="flex flex-wrap items-center gap-x-1.5 text-[13px] leading-snug text-tinta-suave">
           <Camera size={16} aria-hidden />

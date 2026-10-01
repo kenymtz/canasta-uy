@@ -1,16 +1,16 @@
-import { ArrowClockwise, Camera, Check, CheckCircle, EyeSlash, ListPlus, Scissors, WarningCircle } from "@phosphor-icons/react";
+import { ArrowClockwise, Camera, CheckCircle, EyeSlash, PencilSimple, Scissors, WarningCircle } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import ReactCrop, { type Crop, convertToPixelCrop, type PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 
 import { type LecturaBoleta, leerBoleta, type ProductoBoleta } from "../lib/boleta";
-import { formatoPlata } from "../lib/formato";
+import { RevisarProductos } from "./RevisarProductos";
 
 type Estado =
   | { fase: "inicio" }
   | { fase: "recortar"; url: string }
   | { fase: "leyendo"; progreso: number }
-  | { fase: "listo"; lectura: LecturaBoleta; usados: boolean }
+  | { fase: "listo"; lectura: LecturaBoleta }
   | { fase: "error"; mensaje: string };
 
 const botonPrincipal =
@@ -27,7 +27,7 @@ async function leerTexto(imagen: HTMLImageElement, recorte: PixelCrop, alProgres
   const escalaY = imagen.naturalHeight / imagen.height;
   const ancho = recorte.width * escalaX;
   const alto = recorte.height * escalaY;
-  const aumento = Math.max(1, 1400 / ancho); // los tickets tienen letra chica: ampliar ayuda
+  const aumento = Math.max(1, 2400 / ancho); // los tickets tienen letra chica: ampliar ayuda
   const lienzo = document.createElement("canvas");
   lienzo.width = Math.round(ancho * aumento);
   lienzo.height = Math.round(alto * aumento);
@@ -35,10 +35,13 @@ async function leerTexto(imagen: HTMLImageElement, recorte: PixelCrop, alProgres
   ctx.filter = "grayscale(1) contrast(1.4)"; // papel térmico: gris claro sobre blanco
   ctx.drawImage(imagen, recorte.x * escalaX, recorte.y * escalaY, ancho, alto, 0, 0, lienzo.width, lienzo.height);
 
-  const { createWorker } = await import("tesseract.js"); // pesa: se carga solo si se usa
+  const { createWorker, PSM } = await import("tesseract.js"); // pesa: se carga solo si se usa
   const trabajador = await createWorker("spa", 1, {
     logger: (m) => m.status === "recognizing text" && alProgreso(m.progress),
   });
+  // Un ticket es un solo bloque de renglones: leerlo así (en lugar de buscar columnas y
+  // párrafos sueltos) mantiene cada producto en la misma línea que su precio
+  await trabajador.setParameters({ tessedit_pageseg_mode: PSM.SINGLE_BLOCK, preserve_interword_spaces: "1" });
   try {
     const { data } = await trabajador.recognize(lienzo);
     return data.text;
@@ -113,7 +116,7 @@ export function OpcionBoleta({ onListo }: { onListo: (productos: ProductoBoleta[
       const lectura = leerBoleta(texto);
       setEstado(
         lectura.productos.length
-          ? { fase: "listo", lectura, usados: false }
+          ? { fase: "listo", lectura }
           : { fase: "error", mensaje: "No encontramos productos con precio. Probá recortando solo las líneas de productos, con buena luz." },
       );
     } catch {
@@ -147,6 +150,9 @@ export function OpcionBoleta({ onListo }: { onListo: (productos: ProductoBoleta[
           <p className="flex items-center gap-1.5 text-[14px] font-medium">
             <Scissors size={18} className="text-acento" aria-hidden />
             Marcá solo la parte de los productos. Dejá afuera la tarjeta, tu nombre y tu cédula.
+          </p>
+          <p className="text-[12.5px] leading-snug text-tinta-suave">
+            Se lee mejor con el ticket estirado, la foto de frente y con buena luz, sin sombras.
           </p>
           {/* La caja de la imagen tiene que medir lo mismo que la foto: si sobrara espacio, el
               recorte marcado no coincidiría con la parte que se lee */}
@@ -188,40 +194,24 @@ export function OpcionBoleta({ onListo }: { onListo: (productos: ProductoBoleta[
 
       {estado.fase === "listo" && (
         <div className="imprimir flex flex-col gap-3" aria-live="polite">
-          <p className="flex items-center gap-1.5 text-[14px] font-semibold text-acento">
-            <CheckCircle size={18} weight="fill" aria-hidden />
-            Encontramos {estado.lectura.productos.length} productos
-          </p>
+          {estado.lectura.productos.length > 0 && (
+            <p className="flex items-center gap-1.5 text-[14px] font-semibold text-acento">
+              <CheckCircle size={18} weight="fill" aria-hidden />
+              {estado.lectura.productos.length === 1
+                ? "Encontramos 1 producto"
+                : `Encontramos ${estado.lectura.productos.length} productos`}
+            </p>
+          )}
           {estado.lectura.quitadas > 0 && (
             <p className="flex gap-1.5 text-[13px] leading-snug text-tinta-suave">
               <EyeSlash size={16} className="mt-px shrink-0" aria-hidden />
-              Borramos {estado.lectura.quitadas} líneas que podían tener datos personales o de pago.
+              {estado.lectura.quitadas === 1
+                ? "Borramos 1 línea que podía tener datos personales o de pago."
+                : `Borramos ${estado.lectura.quitadas} líneas que podían tener datos personales o de pago.`}
             </p>
           )}
-          <div className="rounded-control border border-dashed border-linea bg-panel px-3 py-2.5">
-            <p className="mb-2 text-[12.5px] font-medium text-tinta-suave">Solo esto se guarda:</p>
-            <ul className="flex flex-col gap-1.5">
-              {estado.lectura.productos.map((p, i) => (
-                <li key={i} className="flex justify-between gap-3 text-[13px]">
-                  <span className="min-w-0">{p.descripcion}</span>
-                  <span className="numeros shrink-0">{formatoPlata(p.precio)}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              className={botonPrincipal}
-              disabled={estado.usados}
-              onClick={() => {
-                onListo(estado.lectura.productos);
-                setEstado({ ...estado, usados: true });
-              }}
-            >
-              {estado.usados ? <Check size={18} weight="bold" aria-hidden /> : <ListPlus size={18} weight="bold" aria-hidden />}
-              {estado.usados ? "Sumados a tu compra" : "Sumar a mi compra"}
-            </button>
+          <RevisarProductos iniciales={estado.lectura.productos} onConfirmar={onListo} />
+          <div>
             <button type="button" className={botonSecundario} onClick={() => setEstado({ fase: "inicio" })}>
               <ArrowClockwise size={18} aria-hidden />
               Otra boleta
@@ -239,10 +229,22 @@ export function OpcionBoleta({ onListo }: { onListo: (productos: ProductoBoleta[
             </button>
           </div>
           {estado.fase === "error" && (
-            <p className="flex gap-1.5 text-[13px] leading-snug text-alerta" role="alert">
-              <WarningCircle size={16} className="mt-px shrink-0" aria-hidden />
-              {estado.mensaje}
-            </p>
+            <>
+              <p className="flex gap-1.5 text-[13px] leading-snug text-alerta" role="alert">
+                <WarningCircle size={16} className="mt-px shrink-0" aria-hidden />
+                {estado.mensaje}
+              </p>
+              <div>
+                <button
+                  type="button"
+                  className={botonSecundario}
+                  onClick={() => setEstado({ fase: "listo", lectura: { productos: [], quitadas: 0 } })}
+                >
+                  <PencilSimple size={18} aria-hidden />
+                  Escribirlos a mano
+                </button>
+              </div>
+            </>
           )}
         </div>
       )}

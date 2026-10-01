@@ -57,4 +57,29 @@ describe("leerBoleta", () => {
     expect(leerBoleta("QUESO RALLADO 80G 1.250,00").productos).toEqual([{ descripcion: "QUESO RALLADO 80G", precio: 1250 }]);
     expect(leerBoleta("PAN FLAUTA 45.90").productos).toEqual([{ descripcion: "PAN FLAUTA", precio: 45.9 }]);
   });
+
+  it("entiende el formato con código, cantidad, precio unitario y letra de IVA (Macromercado)", () => {
+    const texto = `
+Producto                                 Cantidad  Precio  Monto IVA
+31410 SAL SEK FINA YODOFLUORADA 500 GRS.    1,000   45,28   45,28M
+31407 SAL SEK GRUESA YODOFLUORADA 500 GRS.  1,000   45,28   45,28M
+96525 FIAMBRERIA LNETITOS DULCE DE MEMBRILLO 0,794 160,70  127,60B
+Redondeo                                                   -0,16M
+T.E.Imp.:  0,00
+T.M.Imp.:  82,17
+T.B.Imp.: 104,59
+IVA T.M.:   8,23
+IVA T.B.:  23,01
+TOTAL DE COMPRAS  218,00
+`;
+    expect(leerBoleta(texto).productos).toEqual([
+      { descripcion: "SAL SEK FINA YODOFLUORADA 500 GRS.", precio: 45.28 },
+      { descripcion: "SAL SEK GRUESA YODOFLUORADA 500 GRS.", precio: 45.28 },
+      { descripcion: "FIAMBRERIA LNETITOS DULCE DE MEMBRILLO", precio: 127.6 },
+    ]);
+  });
+
+  it("descarta el ruido del lector: líneas con muy pocas letras", () => {
+    expect(leerBoleta("TM. 82,17\na 1,00\nPAN 45,90").productos).toEqual([{ descripcion: "PAN", precio: 45.9 }]);
+  });
 });
