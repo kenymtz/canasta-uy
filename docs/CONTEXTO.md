@@ -408,7 +408,9 @@ de Augusto: presentar el trámite de la URCDP y activar la verificación en dos 
 Google, GitHub, Cloudflare). Frutas y verduras: la fuente es la UAM (ver `docs/FUENTES.md`);
 **en espera de que la UAM responda** si se pueden reutilizar sus precios. SIPC de un año
 nuevo: la actualización mensual lo detecta sola (`pipelines/fuentes/sipc_anio_nuevo.py`) y
-abre un issue en GitHub con lo que hay que hacer.
+abre un issue en GitHub con lo que hay que hacer. Cloudflare: el proyecto `canastauy` está en la cuenta de Augusto
+(verificado el 01/10/2026); "No Git connection" es lo esperado (publica el workflow con
+wrangler; no conectar Git en Cloudflare o se publicaría dos veces).
 
 5. **Usuarios y tickets:** cuentas, subir el ticket (investigar el QR del CFE de la DGI;
    si no alcanza, foto + extracción con IA), comparar con la compra anterior.
