@@ -1,16 +1,16 @@
-import { ArrowClockwise, Camera, CheckCircle, EyeSlash, PaperPlaneRight, Scissors, WarningCircle } from "@phosphor-icons/react";
+import { ArrowClockwise, Camera, Check, CheckCircle, EyeSlash, ListPlus, Scissors, WarningCircle } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import ReactCrop, { type Crop, convertToPixelCrop, type PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 
-import { type LecturaBoleta, leerBoleta } from "../lib/boleta";
+import { type LecturaBoleta, leerBoleta, type ProductoBoleta } from "../lib/boleta";
 import { formatoPlata } from "../lib/formato";
 
 type Estado =
   | { fase: "inicio" }
   | { fase: "recortar"; url: string }
   | { fase: "leyendo"; progreso: number }
-  | { fase: "listo"; lectura: LecturaBoleta }
+  | { fase: "listo"; lectura: LecturaBoleta; usados: boolean }
   | { fase: "error"; mensaje: string };
 
 const botonPrincipal =
@@ -78,7 +78,7 @@ function BoletaEjemplo() {
 }
 
 /** Opción 2: leer los productos y precios de la boleta, sin datos personales. */
-export function OpcionBoleta() {
+export function OpcionBoleta({ onListo }: { onListo: (productos: ProductoBoleta[]) => void }) {
   const [estado, setEstado] = useState<Estado>({ fase: "inicio" });
   const [recorte, setRecorte] = useState<Crop>();
   const [recortePx, setRecortePx] = useState<PixelCrop>();
@@ -113,7 +113,7 @@ export function OpcionBoleta() {
       const lectura = leerBoleta(texto);
       setEstado(
         lectura.productos.length
-          ? { fase: "listo", lectura }
+          ? { fase: "listo", lectura, usados: false }
           : { fase: "error", mensaje: "No encontramos productos con precio. Probá recortando solo las líneas de productos, con buena luz." },
       );
     } catch {
@@ -125,8 +125,8 @@ export function OpcionBoleta() {
     <div className="flex flex-col gap-4">
       <div className="flex items-start gap-4">
         <p className="min-w-0 flex-1 text-[14px] leading-snug text-tinta-suave">
-          Sacale una foto a la boleta y recortá solo los productos. Así actualizamos los precios del local donde
-          compraste: si fue en el Tata, se actualiza la lista del Tata.
+          Sacale una foto a la boleta y recortá solo los productos. Así queda registrado qué compraste y a qué
+          precio, y podés ver qué subió desde la última vez.
         </p>
         <BoletaEjemplo />
       </div>
@@ -199,7 +199,7 @@ export function OpcionBoleta() {
             </p>
           )}
           <div className="rounded-control border border-dashed border-linea bg-panel px-3 py-2.5">
-            <p className="mb-2 text-[12.5px] font-medium text-tinta-suave">Solo esto se enviaría:</p>
+            <p className="mb-2 text-[12.5px] font-medium text-tinta-suave">Solo esto se guarda:</p>
             <ul className="flex flex-col gap-1.5">
               {estado.lectura.productos.map((p, i) => (
                 <li key={i} className="flex justify-between gap-3 text-[13px]">
@@ -210,18 +210,23 @@ export function OpcionBoleta() {
             </ul>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" className={botonPrincipal} disabled>
-              <PaperPlaneRight size={18} weight="bold" aria-hidden />
-              Enviar
+            <button
+              type="button"
+              className={botonPrincipal}
+              disabled={estado.usados}
+              onClick={() => {
+                onListo(estado.lectura.productos);
+                setEstado({ ...estado, usados: true });
+              }}
+            >
+              {estado.usados ? <Check size={18} weight="bold" aria-hidden /> : <ListPlus size={18} weight="bold" aria-hidden />}
+              {estado.usados ? "Sumados a tu compra" : "Sumar a mi compra"}
             </button>
             <button type="button" className={botonSecundario} onClick={() => setEstado({ fase: "inicio" })}>
               <ArrowClockwise size={18} aria-hidden />
               Otra boleta
             </button>
           </div>
-          <p className="text-[12.5px] leading-snug text-tinta-suave">
-            El envío llega en la próxima etapa, junto con las cuentas de usuario. Nada se manda sin que lo confirmes.
-          </p>
         </div>
       )}
 

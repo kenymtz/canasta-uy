@@ -152,8 +152,8 @@ docker compose logs jupyter
 - [x] Consulta de canasta: costo por comercio, cobertura, faltantes y presupuesto
 - [x] API (FastAPI) con validación, conexión de solo lectura y tests
 - [x] Web con mapa interactivo (MapLibre + OpenFreeMap), resultados en forma de ticket y listas guardadas
-- [ ] Cuentas de usuario y carga de tickets (QR del CFE o foto con IA)
-- [ ] Comparación con la compra anterior
+- [x] Mis compras: el ticket (QR del CFE y boleta leída en el teléfono) registra qué, cuánto y dónde, y se compara con la compra anterior
+- [ ] Cuentas de usuario opcionales (Supabase) para tener el historial en cualquier dispositivo
 - [ ] Controles de calidad guardados por carga
 - [x] Despliegue público gratis: web estática en Cloudflare Pages, actualizada sola cada mes
 

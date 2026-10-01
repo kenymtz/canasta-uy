@@ -326,6 +326,20 @@ Para el objetivo actual (web de compras al menor costo en Uruguay):
    del genérico (versión 2 del store; `migrar` convierte lo guardado por id con la tabla fija
    `web/src/store/nombresVersion1.ts`). Si un producto de una lista ya no tiene precios, la
    canasta lo avisa ("Sin precios vigentes") y no lo cotiza.
+5a. ~~Mis compras (sin cuenta)~~ ✅ (30/09/2026): pedido de Augusto: registrar qué compró,
+   cuánto y dónde cada vez que sube el ticket, con cuentas opcionales. Parte A (hecha): el
+   historial vive en el navegador (`store/compras.ts`, clave `canasta-uy-compras`). El QR da
+   fecha, total y RUC; la boleta, los productos (ya sin datos personales); como el RUC no dice
+   la sucursal, el usuario marca el comercio entre los cercanos (`ConfirmarCompra.tsx`) y la
+   próxima vez con el mismo RUC viene marcado. El id de la compra es el del comprobante (no
+   se guarda dos veces el mismo ticket). `MisCompras.tsx` muestra cada compra con la
+   diferencia contra la anterior y qué productos cambiaron de precio (mismo texto de boleta,
+   sin mayúsculas, tildes ni espacios de más). Lógica pura y tests en `lib/compras.ts`.
+   Aviso: "Sin cuenta, tus compras quedan solo en este teléfono... iniciar sesión (no es
+   obligatorio)". Parte B (pendiente): cuentas con **Supabase** (Postgres + Auth, plan gratis,
+   inicio con Google, Row Level Security, región en Europa por la Ley 18.331), sincronizar el
+   historial, botón para borrar cuenta y datos, página de privacidad, registro en la URCDP.
+   Parte C (después): usar los tickets para actualizar precios públicos, con controles.
 5. **Usuarios y tickets:** cuentas, subir el ticket (investigar el QR del CFE de la DGI;
    si no alcanza, foto + extracción con IA), comparar con la compra anterior.
 6. Calidad: guardar el reporte de cada carga en una tabla. Servidor propio cuando se pueda

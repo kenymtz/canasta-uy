@@ -63,7 +63,7 @@ function TicketEjemplo() {
 }
 
 /** Opción 1: leer solo el QR (comercio, fecha y total). */
-export function OpcionQr() {
+export function OpcionQr({ onLeido }: { onLeido: (compra: CompraQr) => void }) {
   const [estado, setEstado] = useState<Estado>({ fase: "inicio" });
   const entrada = useRef<HTMLInputElement>(null);
 
@@ -82,6 +82,7 @@ export function OpcionQr() {
           ? { fase: "leido", compra }
           : { fase: "error", mensaje: "Ese código no es de un ticket de la DGI. Buscá el QR que está al pie del ticket." },
       );
+      if (compra) onLeido(compra);
     } catch {
       setEstado({ fase: "error", mensaje: "No pudimos abrir la foto. Probá con otra." });
     } finally {
@@ -94,7 +95,7 @@ export function OpcionQr() {
       <div className="flex items-start gap-4">
         <p className="min-w-0 flex-1 text-[14px] leading-snug text-tinta-suave">
           Escaneá el QR que está al pie del ticket. Nos dice en qué comercio compraste, cuándo y cuánto gastaste, y
-          así sabemos dónde compra la gente.
+          lo guardamos en tus compras.
         </p>
         <TicketEjemplo />
       </div>
@@ -128,9 +129,6 @@ export function OpcionQr() {
               </div>
             ))}
           </dl>
-          <p className="text-[12.5px] leading-snug text-tinta-suave">
-            Por ahora no guardamos tickets: se suman en la próxima etapa del proyecto, junto con las cuentas de usuario.
-          </p>
           <div>
             <button type="button" className={botonSecundario} onClick={() => entrada.current?.click()}>
               <ArrowClockwise size={18} aria-hidden />

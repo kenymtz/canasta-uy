@@ -4,6 +4,7 @@ import { Canasta } from "./components/Canasta";
 import { Encabezado } from "./components/Encabezado";
 import { Resultados } from "./components/Resultados";
 import { Resumen } from "./components/Resumen";
+import { MisCompras } from "./components/MisCompras";
 import { SumarTicket } from "./components/SumarTicket";
 import { PUNTO_EN_EL_MAPA, Ubicacion } from "./components/Ubicacion";
 import { api, type Ciudad, type Comercio, type Generico } from "./lib/api";
@@ -131,7 +132,8 @@ export default function App() {
           onAmpliar={() => setRadio(Math.min(radioKm + 5, 20))}
           onReintentar={cotizacion.reintentar}
         />
-        <SumarTicket />
+        <SumarTicket ubicacion={ubicacion} />
+        <MisCompras />
         <Resumen mejor={cotizacion.fase === "listo" ? cotizacion.resultados[0] : undefined} />
       </aside>
     </div>
