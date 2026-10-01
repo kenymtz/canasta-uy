@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="es-UY">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="description" content="Qué datos guarda Canasta UY, para qué, dónde y cómo borrarlos." />
+    <title>Privacidad · Canasta UY</title>
+    <script>
+      // Mismo tema que la web (ver index.html)
+      (function () {
+        var tema = null;
+        try { tema = localStorage.getItem("tema"); } catch (e) {}
+        if (tema !== "claro" && tema !== "oscuro") {
+          tema = matchMedia("(prefers-color-scheme: dark)").matches ? "oscuro" : "claro";
+        }
+        document.documentElement.dataset.tema = tema;
+      })();
+    </script>
+    <style>
+      /* Los mismos colores que la web (src/styles.css) */
+      :root {
+        --fondo: #e7ecea;
+        --ticket: #fbfcfb;
+        --tinta: #14201b;
+        --tinta-suave: #56645e;
+        --linea: #d3dcd8;
+        --acento: #167a4f;
+        --acento-suave: #e2f2e9;
+      }
+      :root[data-tema="oscuro"] {
+        --fondo: #0d1311;
+        --ticket: #19221f;
+        --tinta: #e4ebe8;
+        --tinta-suave: #9aa9a3;
+        --linea: #2b3733;
+        --acento: #4cc38a;
+        --acento-suave: #173a2a;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--fondo);
+        color: var(--tinta);
+        font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        padding: 32px 16px 64px;
+      }
+      main {
+        max-width: 680px;
+        margin: 0 auto;
+        background: var(--ticket);
+        border: 1px solid var(--linea);
+        border-radius: 14px;
+        padding: 28px 24px;
+      }
+      h1 { font-size: 1.6rem; line-height: 1.2; margin: 0 0 4px; letter-spacing: -0.01em; }
+      h2 { font-size: 1.05rem; margin: 28px 0 6px; }
+      p, li { color: var(--tinta); }
+      .suave { color: var(--tinta-suave); font-size: 0.9rem; }
+      ul { padding-left: 1.2em; margin: 6px 0; }
+      li { margin: 3px 0; }
+      a { color: var(--acento); font-weight: 500; text-underline-offset: 2px; }
+      .resumen {
+        background: var(--acento-suave);
+        border-radius: 10px;
+        padding: 12px 14px;
+        margin: 18px 0 0;
+      }
+      .volver { display: inline-block; margin-bottom: 18px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a class="volver" href="./">← Volver a Canasta UY</a>
+      <h1>Privacidad</h1>
+      <p class="suave">Última actualización: 30/09/2026</p>
+
+      <p class="resumen">
+        <strong>En corto:</strong> la cuenta es opcional. Si la usás, guardamos tu mail y tus compras (qué, cuánto y
+        dónde) solo para mostrarte tu historial. Otros usuarios no las pueden ver, no las vendemos ni las compartimos,
+        y las podés borrar cuando quieras.
+      </p>
+
+      <h2>Quién es el responsable</h2>
+      <p>
+        Canasta UY es un proyecto personal de Augusto Calfani, estudiante de Ingeniería de Datos e Inteligencia
+        Artificial (UTEC), sin fines comerciales. El código es público:
+        <a href="https://github.com/kenymtz/canasta-uy">github.com/kenymtz/canasta-uy</a>.
+      </p>
+
+      <h2>Qué datos guardamos</h2>
+      <p>Sin cuenta, no guardamos nada en ningún servidor: tu canasta, tus listas y tus compras quedan solo en tu navegador.</p>
+      <p>Si iniciás sesión con Google, guardamos:</p>
+      <ul>
+        <li>tu mail y tu nombre, que nos pasa Google para identificar tu cuenta;</li>
+        <li>
+          tus compras: fecha, total, la empresa (su RUC), el comercio que marcaste y los productos con su precio.
+        </li>
+      </ul>
+
+      <h2>Qué datos no guardamos</h2>
+      <ul>
+        <li>Las fotos de tus tickets: se leen en tu teléfono y nunca se suben.</li>
+        <li>
+          Datos de pago o personales que aparezcan en la boleta (tarjeta, cuenta, cédula, nombre): el teléfono borra
+          esas líneas antes de mostrarte lo que se guarda.
+        </li>
+        <li>Tu ubicación: la ciudad o el punto que elegís en el mapa se usa para cotizar y queda en tu navegador.</li>
+        <li>Tu contraseña de Google: el inicio de sesión lo hace Google.</li>
+      </ul>
+
+      <h2>Para qué los usamos</h2>
+      <p>
+        Solo para mostrarte tu historial en cualquier dispositivo y compararlo con tus compras anteriores. No los usamos
+        para publicidad, no hacemos perfiles y no se los damos a nadie.
+      </p>
+
+      <h2>Dónde se guardan</h2>
+      <p>
+        En una base de datos de <a href="https://supabase.com/privacy">Supabase</a> con servidores en Frankfurt
+        (Alemania, Unión Europea). La base está configurada para que cada cuenta pueda ver y borrar solo sus propias
+        compras. El responsable del proyecto tiene acceso técnico a la base para mantenerla y no usa los datos para
+        nada más.
+      </p>
+
+      <h2>Cuánto tiempo</h2>
+      <p>Hasta que borres la compra o tu cuenta. Al borrar la cuenta se borran también todas sus compras.</p>
+
+      <h2>Tus derechos</h2>
+      <p>
+        Por la Ley 18.331 de Protección de Datos Personales podés acceder a tus datos, corregirlos y borrarlos. En la
+        web:
+      </p>
+      <ul>
+        <li>ves todas tus compras en <strong>Mis compras</strong>;</li>
+        <li>borrás una compra desde su detalle;</li>
+        <li>borrás la cuenta y todo su historial con <strong>Borrar mi cuenta</strong>.</li>
+      </ul>
+      <p>
+        Para cualquier otra consulta, escribí en
+        <a href="https://github.com/kenymtz/canasta-uy/issues">el repositorio del proyecto</a> (sin poner datos
+        personales en el mensaje). También podés acudir a la Unidad Reguladora y de Control de Datos Personales
+        (<a href="https://www.gub.uy/unidad-reguladora-control-datos-personales/">URCDP</a>).
+      </p>
+
+      <h2>Precios</h2>
+      <p class="suave">
+        Los precios que muestra la web son datos abiertos del Sistema de Información de Precios al Consumidor (SIPC) y
+        son orientativos: verificá el precio en el comercio.
+      </p>
+    </main>
+  </body>
+</html>
