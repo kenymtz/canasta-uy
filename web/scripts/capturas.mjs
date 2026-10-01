@@ -25,7 +25,8 @@ async function guardarListas(pagina) {
   await pagina.evaluate(async (listas) => {
     // Con API (desarrollo) o, en la web estática, desde los archivos exportados
     const conApi = await fetch("/api/genericos").catch(() => null);
-    const genericos = conApi?.ok
+    // (Cloudflare Pages responde las rutas desconocidas con la página, no con un 404)
+    const genericos = conApi?.ok && conApi.headers.get("content-type")?.includes("json")
       ? await conApi.json()
       : (await (await fetch("datos/base.json")).json()).genericos;
     const nombres = new Set(genericos.map((g) => g.nombre));
