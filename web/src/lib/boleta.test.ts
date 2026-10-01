@@ -143,8 +143,9 @@ describe("leerBoleta con columnas cuando la foto es chica (WhatsApp, captura)", 
 
   it("un número suelto sin coma no es un precio", () => {
     expect(leerBoleta("ARROZ BLANCO 1KG 1000").productos).toEqual([]);
+    // Y un número suelto antes del precio es parte del nombre (150 ml), no una columna
     expect(leerBoleta("PROTECTOR SOLAR SPF 50 EUCERIN 150    362,26").productos).toEqual([
-      { descripcion: "PROTECTOR SOLAR SPF 50 EUCERIN", precio: 362.26 },
+      { descripcion: "PROTECTOR SOLAR SPF 50 EUCERIN 150", precio: 362.26 },
     ]);
   });
 });
@@ -161,5 +162,43 @@ describe("leerBoleta y el código de artículo mal leído", () => {
 describe("leerBoleta y el recuadro de impuestos escrito de otras formas", () => {
   it("descarta T.BImp., T.MImp. y T.Expa. aunque falten los puntos", () => {
     expect(leerBoleta("T.Expa.: 0.00\nT.MImp.: 12.00\nT.BImp.: 44.63\nT.Bimp.: 44.63").productos).toEqual([]);
+  });
+});
+
+describe("leerBoleta con la cantidad al principio (formato Disco y Tata)", () => {
+  // Texto tal como lo leyó el lector en boletas inventadas por Augusto (no son compras reales)
+  const texto = `“U     LECHE UHT ENTERA 1L          —- 64,90       64,90
+1 . PAN FLAUTA 6 UN.           “e: 09950       69,50
+0,732 BANANA KG                       78,90       57,71
+1     QUESO COLONIA 200G      y 149,00      119,00
+1     JAMON COCTDO 200G              98,50       98,50
+2 . AGUA MINERAL 1.5L     46,50      - 93,00
+1 + PAPEL HIGIENICO 4 UN.          135,00 135,00
+1 JAMON COCIDO 200G     K     98,50      98,50`;
+
+  it("saca la cantidad, los signos sueltos y las letras perdidas alrededor del nombre", () => {
+    expect(leerBoleta(texto).productos).toEqual([
+      { descripcion: "LECHE UHT ENTERA 1L", precio: 64.9 },
+      { descripcion: "PAN FLAUTA 6 UN.", precio: 69.5 },
+      { descripcion: "BANANA KG", precio: 57.71 },
+      { descripcion: "QUESO COLONIA 200G", precio: 119 },
+      { descripcion: "JAMON COCTDO 200G", precio: 98.5 },
+      { descripcion: "AGUA MINERAL 1.5L", precio: 93 },
+      { descripcion: "PAPEL HIGIENICO 4 UN.", precio: 135 },
+      { descripcion: "JAMON COCIDO 200G", precio: 98.5 },
+    ]);
+  });
+
+  it("no le saca nada a un nombre corto de verdad", () => {
+    expect(leerBoleta("PAN 45,90").productos).toEqual([{ descripcion: "PAN", precio: 45.9 }]);
+  });
+});
+
+describe("leerBoleta y los números que son parte del nombre", () => {
+  it("no corta un 150G leído como 1506 ni un 1.5L leído como 1.51", () => {
+    expect(leerBoleta("1 PAPAS FRITAS 1506 -          85,00 85,00\n2 . AGUA MINERAL 1.51     46,50      - 93,00").productos).toEqual([
+      { descripcion: "PAPAS FRITAS 1506", precio: 85 },
+      { descripcion: "AGUA MINERAL 1.51", precio: 93 },
+    ]);
   });
 });

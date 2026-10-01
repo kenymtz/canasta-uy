@@ -390,6 +390,11 @@ Para el objetivo actual (web de compras al menor costo en Uruguay):
    Boleta inventada por Augusto (formato Macromercado, impresión nítida; **solo para pruebas,
    no cargar en ninguna base**): 100 % original, por WhatsApp y en capturas; 29 % muy dañada.
    Conclusión: lo que más pesa es la calidad de la impresión, no si la foto vino por WhatsApp.
+   Boletas inventadas de Disco y Tata (limpias y gastadas, **solo para pruebas**): formato con
+   la cantidad al principio. Arreglos: limpiar cantidad y signos sueltos del nombre, no cortar
+   números del nombre ("1506" = 150G mal leído) y **dos lecturas** (normal y con el fondo
+   aplanado; se queda la que tiene más productos, `PASADAS`). Limpias: 100 % original, ~90-97 %
+   con versiones WhatsApp y captura. Gastadas: de 9 % a 21-26 %. Boletas falsas: 58 % → 65 %.
 5. **Usuarios y tickets:** cuentas, subir el ticket (investigar el QR del CFE de la DGI;
    si no alcanza, foto + extracción con IA), comparar con la compra anterior.
 6. Calidad: guardar el reporte de cada carga en una tabla. Servidor propio cuando se pueda

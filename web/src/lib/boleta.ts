@@ -37,8 +37,11 @@ const CABECERA = /(descripci|producto|importe|cantidad|\bcant\b|precio|monto)/i;
 // ("45,28M", "127,60 B") y el lector a veces agrega un signo o un espacio después de la coma
 // ("407, 32B", "250,42?"): se aceptan y se ignoran.
 const PRECIO_AL_FINAL = /(-?\d{1,3}(?:[.,]\d{3})+[.,]\s?\d{2}|-?\d+[.,]\s?\d{2})\s*[A-Za-z*?]?\s*$/;
-// Columnas de cantidad y precio unitario antes del monto ("1,000   45,28" o "0,794 160,70")
-const COLUMNAS_ANTES_DEL_MONTO = /(\s+-?\d+(?:[.,]\d{1,3})?){1,2}\s*$/;
+// Columnas de cantidad y precio unitario antes del monto ("1,000   45,28" o "0,794 160,70").
+// Solo se cortan números con forma de columna: un "150G" leído como "1506" o un "1.5L" leído
+// como "1.51" son parte del nombre
+const PRECIO_DE_COLUMNA = /^-?\d+[.,]\d{2}$|^\d{5,}$/; // "46,50"; "09950" es un precio mal leído
+const CANTIDAD_DE_COLUMNA = /^\d+[.,]\d{3}$/; // "1,000", "0,794"
 // Productos en dos renglones: el nombre arriba y "2 x 176,55      353,10" abajo
 const CANTIDAD_POR_UNITARIO = /^\d+(?:[.,]\d+)?\s*[xX×*]/;
 // Código de artículo al principio ("31410 SAL SEK FINA..."): no dice nada del producto. El
@@ -53,14 +56,33 @@ function aNumero(precio: string): number {
   return Number(precio.replace(/[^\d-]/g, "")) / 100;
 }
 
+// Pedacitos que el lector agrega alrededor del nombre y no son parte del producto:
+//   al final, signos o una letra suelta antes de las columnas ("200G y", "6 UN. “e:", "1.5L -")
+//   al principio, la cantidad y lo que la acompaña ("1 .", "2 -", "0,732", "“U") o el código
+const esRellenoFinal = (t: string) => !/\d/.test(t) && letras(t) <= 1;
+const esRellenoInicial = (t: string) => letras(t) < 3 && t.length <= 6;
+
+/** Saca, del final, el precio unitario y la cantidad: "SAL FINA 1,000 45,28" → "SAL FINA". */
+function quitarColumnas(texto: string): string {
+  const partes = texto.split(/\s+/);
+  if (partes.length > 1 && PRECIO_DE_COLUMNA.test(partes.at(-1)!)) partes.pop();
+  if (partes.length > 1 && (CANTIDAD_DE_COLUMNA.test(partes.at(-1)!) || aCantidad(partes.at(-1)!) !== null)) partes.pop();
+  return partes.join(" ");
+}
+
 function limpiar(descripcion: string): string {
-  return descripcion
-    .replace(COLUMNAS_ANTES_DEL_MONTO, "")
+  const sinRellenoFinal = (texto: string) => {
+    const partes = texto.trim().split(/\s+/);
+    while (partes.length && esRellenoFinal(partes.at(-1)!)) partes.pop();
+    return partes.join(" ");
+  };
+  const partes = sinRellenoFinal(quitarColumnas(sinRellenoFinal(descripcion)))
     .replace(CODIGO_AL_PRINCIPIO, "")
-    .replace(NUMERO_LARGO, "•••")
-    .replace(/[\s—–_|]+$/, "") // rayas y separadores que el lector agrega al final
-    .replace(/\s{2,}/g, " ")
-    .trim();
+    .split(" ")
+    .filter(Boolean);
+  // Solo si después queda un nombre: "1 PAN" pierde el 1, pero "PAN" no se toca
+  while (partes.length > 1 && esRellenoInicial(partes[0])) partes.shift();
+  return partes.join(" ").replace(NUMERO_LARGO, "•••").replace(/\s{2,}/g, " ").trim();
 }
 
 // ─── Columnas de cantidad y precio ───────────────────────────────────────────
@@ -100,7 +122,9 @@ function montoSinComa(numeros: string): number | null {
   return monto !== null && cierra(cantidad, unitario, monto) ? monto : null;
 }
 
-const letras = (texto: string) => texto.match(/\p{L}/gu)?.length ?? 0;
+function letras(texto: string): number {
+  return texto.match(/\p{L}/gu)?.length ?? 0;
+}
 const pareceProducto = (descripcion: string) =>
   letras(descripcion) >= MINIMO_DE_LETRAS && !NO_ES_PRODUCTO.test(descripcion) && !CABECERA.test(descripcion);
 

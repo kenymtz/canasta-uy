@@ -22,10 +22,16 @@ export interface Preparacion {
    * grises hace que la tinta gastada vuelva a leerse. 0 = sin niveles.
    */
   niveles: number;
+  /**
+   * Aplanar el fondo: se divide la imagen por una copia muy borrosa de sí misma (de este radio,
+   * en píxeles de la imagen ampliada). Las manchas, sombras y arrugas del papel son grandes y
+   * desaparecen; las letras son chicas y quedan. 0 = sin aplanar.
+   */
+  fondo: number;
 }
 
 // Elegidos con el banco de pruebas (eval/boletas): ver su README
-export const PREPARACION: Preparacion = { ancho: 1800, niveles: 0.02 };
+export const PREPARACION: Preparacion = { ancho: 1800, niveles: 0.02, fondo: 0 };
 
 /** Recorta, amplía, pasa a gris y estira los grises. */
 export function prepararImagen(imagen: CanvasImageSource, recorte: Recorte, p: Preparacion = PREPARACION): HTMLCanvasElement {
@@ -37,8 +43,27 @@ export function prepararImagen(imagen: CanvasImageSource, recorte: Recorte, p: P
   ctx.imageSmoothingQuality = "high";
   ctx.filter = "grayscale(1) contrast(1.4)";
   ctx.drawImage(imagen, recorte.x, recorte.y, recorte.ancho, recorte.alto, 0, 0, lienzo.width, lienzo.height);
+  if (p.fondo > 0) aplanarFondo(ctx, lienzo, p.fondo);
   if (p.niveles > 0) estirarGrises(ctx, lienzo.width, lienzo.height, p.niveles);
   return lienzo;
+}
+
+function aplanarFondo(ctx: CanvasRenderingContext2D, lienzo: HTMLCanvasElement, radio: number) {
+  const { width: ancho, height: alto } = lienzo;
+  const borroso = document.createElement("canvas");
+  borroso.width = ancho;
+  borroso.height = alto;
+  const b = borroso.getContext("2d", { willReadFrequently: true })!;
+  b.filter = `blur(${radio}px)`;
+  b.drawImage(lienzo, 0, 0);
+  const fondo = b.getImageData(0, 0, ancho, alto).data;
+  const datos = ctx.getImageData(0, 0, ancho, alto);
+  const p = datos.data;
+  for (let i = 0; i < p.length; i += 4) {
+    const v = Math.min(255, (p[i] / Math.max(1, fondo[i])) * 255);
+    p[i] = p[i + 1] = p[i + 2] = v;
+  }
+  ctx.putImageData(datos, 0, 0);
 }
 
 function estirarGrises(ctx: CanvasRenderingContext2D, ancho: number, alto: number, niveles: number) {
@@ -62,23 +87,41 @@ function estirarGrises(ctx: CanvasRenderingContext2D, ancho: number, alto: numbe
   ctx.putImageData(datos, 0, 0);
 }
 
+/**
+ * Las formas de preparar la imagen que se prueban, en orden. Ninguna sirve para todas las
+ * boletas (medido con el banco de pruebas): aplanar el fondo rescata las boletas manchadas y
+ * arrugadas, pero empeora las de tinta muy gastada. Se leen las dos y se queda la mejor.
+ */
+export const PASADAS: Preparacion[] = [PREPARACION, { ...PREPARACION, fondo: 20 }];
+
+/**
+ * Lee el recorte con cada preparación y devuelve el texto que mejor puntúa (por ejemplo, el
+ * que tiene más productos). Con una sola preparación es una lectura común.
+ */
 export async function leerTexto(
   imagen: CanvasImageSource,
   recorte: Recorte,
   alProgreso: (p: number) => void = () => {},
-  preparacion: Preparacion = PREPARACION,
+  pasadas: Preparacion[] = PASADAS,
+  puntuar: (texto: string) => number = () => 0,
 ): Promise<string> {
-  const lienzo = prepararImagen(imagen, recorte, preparacion);
   const { createWorker, PSM } = await import("tesseract.js"); // pesa: se carga solo si se usa
+  let vuelta = 0;
   const trabajador = await createWorker("spa", 1, {
-    logger: (m) => m.status === "recognizing text" && alProgreso(m.progress),
+    logger: (m) => m.status === "recognizing text" && alProgreso((vuelta + m.progress) / pasadas.length),
   });
   // Un ticket es un solo bloque de renglones: leerlo así (en lugar de buscar columnas y
   // párrafos sueltos) mantiene cada producto en la misma línea que su precio
   await trabajador.setParameters({ tessedit_pageseg_mode: PSM.SINGLE_BLOCK, preserve_interword_spaces: "1" });
   try {
-    const { data } = await trabajador.recognize(lienzo);
-    return data.text;
+    let mejor = { texto: "", puntaje: -Infinity };
+    for (const preparacion of pasadas) {
+      const { data } = await trabajador.recognize(prepararImagen(imagen, recorte, preparacion));
+      const puntaje = puntuar(data.text);
+      if (puntaje > mejor.puntaje) mejor = { texto: data.text, puntaje };
+      vuelta++;
+    }
+    return mejor.texto;
   } finally {
     await trabajador.terminate();
   }

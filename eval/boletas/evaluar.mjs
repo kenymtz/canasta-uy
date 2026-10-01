@@ -22,9 +22,16 @@ const WEB = process.env.WEB_URL ?? "http://web:5173";
 const CARPETAS = process.argv.slice(2).length ? process.argv.slice(2) : ["generadas", "reales", "variantes"];
 const PARECIDO_MINIMO = 0.8;
 // Para probar otra preparación de la imagen sin tocar la web: OCR_ANCHO=2400 OCR_NIVELES=0
+// OCR_FONDO=30 (los que no se indican quedan como en la web: web/src/lib/lectorBoleta.ts)
 const PREPARACION =
-  process.env.OCR_ANCHO || process.env.OCR_NIVELES
-    ? { ancho: Number(process.env.OCR_ANCHO ?? 1800), niveles: Number(process.env.OCR_NIVELES ?? 0.02) }
+  process.env.OCR_ANCHO || process.env.OCR_NIVELES || process.env.OCR_FONDO
+    ? Object.fromEntries(
+        [
+          ["ancho", process.env.OCR_ANCHO],
+          ["niveles", process.env.OCR_NIVELES],
+          ["fondo", process.env.OCR_FONDO],
+        ].filter(([, v]) => v).map(([k, v]) => [k, Number(v)]),
+      )
     : null;
 if (PREPARACION) console.log("Preparación de prueba:", PREPARACION);
 
@@ -96,7 +103,10 @@ async function leer(archivo, recorte) {
       img.src = `data:${tipo};base64,${datos}`;
       await img.decode();
       const zona = recorte ?? { x: 0, y: 0, ancho: img.naturalWidth, alto: img.naturalHeight };
-      const texto = await leerTexto(img, zona, () => {}, preparacion ?? undefined);
+      // Igual que la web (todas sus pasadas), o una sola preparación de prueba si se pidió
+      const { PASADAS, PREPARACION: deLaWeb } = await import("/src/lib/lectorBoleta.ts");
+      const pasadas = preparacion ? [{ ...deLaWeb, ...preparacion }] : PASADAS;
+      const texto = await leerTexto(img, zona, () => {}, pasadas, (t) => leerBoleta(t).productos.length);
       return { texto, ...leerBoleta(texto) };
     },
     { datos, tipo, recorte, preparacion: PREPARACION },
@@ -130,8 +140,9 @@ for (const carpeta of CARPETAS) {
         segundos: Math.round((Date.now() - inicio) / 100) / 10,
         ...nota,
         leidos: lectura.productos,
-        // El texto completo de una foto real puede tener datos personales: no se guarda
-        texto: real ? undefined : lectura.texto,
+        // El texto completo de una foto real puede tener datos personales: no se guarda (salvo
+        // en las boletas inventadas, marcadas así en su .json, que sirven para depurar)
+        texto: real && !/INVENTADA/.test(esperado.nota ?? "") ? undefined : lectura.texto,
       });
       const r = resultados.at(-1);
       console.log(

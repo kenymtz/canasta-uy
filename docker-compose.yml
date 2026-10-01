@@ -149,6 +149,7 @@ services:
       CATALOGO: /datos/precios.json
       OCR_ANCHO: ${OCR_ANCHO:-}
       OCR_NIVELES: ${OCR_NIVELES:-}
+      OCR_FONDO: ${OCR_FONDO:-}
     command: sh -c "npm install --no-audit --no-fund && node generar.mjs $${CANTIDAD:-48} && node variar.mjs $${VERSIONES:-12} && node evaluar.mjs"
     volumes:
       - ./eval/boletas:/eval

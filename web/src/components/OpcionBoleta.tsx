@@ -4,7 +4,7 @@ import ReactCrop, { type Crop, convertToPixelCrop, type PixelCrop } from "react-
 import "react-image-crop/dist/ReactCrop.css";
 
 import { type LecturaBoleta, leerBoleta, type ProductoBoleta } from "../lib/boleta";
-import { leerTexto } from "../lib/lectorBoleta";
+import { leerTexto, PASADAS } from "../lib/lectorBoleta";
 import { ElegirFoto } from "./ElegirFoto";
 import { RevisarProductos } from "./RevisarProductos";
 
@@ -88,7 +88,14 @@ export function OpcionBoleta({ onListo }: { onListo: (productos: ProductoBoleta[
         ancho: recortePx.width * escalaX,
         alto: recortePx.height * escalaY,
       };
-      const texto = await leerTexto(img, recorte, (progreso) => setEstado({ fase: "leyendo", progreso }));
+      // Se queda con la lectura que encontró más productos (ver PASADAS en lectorBoleta.ts)
+      const texto = await leerTexto(
+        img,
+        recorte,
+        (progreso) => setEstado({ fase: "leyendo", progreso }),
+        PASADAS,
+        (t) => leerBoleta(t).productos.length,
+      );
       const lectura = leerBoleta(texto);
       setEstado(
         lectura.productos.length

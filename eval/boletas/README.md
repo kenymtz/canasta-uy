@@ -83,8 +83,10 @@ resultados, solo los productos.
 ## Resultados
 
 Para probar otra forma de preparar la imagen sin tocar la web:
-`OCR_ANCHO=2400 OCR_NIVELES=0 docker compose run --rm eval-boletas` (ancho al que se amplía
-el recorte y porcentaje de niveles automáticos; ver `web/src/lib/lectorBoleta.ts`).
+`OCR_ANCHO=2400 OCR_NIVELES=0 OCR_FONDO=20 docker compose run --rm eval-boletas` (ancho al
+que se amplía el recorte, porcentaje de niveles automáticos y radio para aplanar el fondo;
+con alguna de estas variables se lee una sola vez con esa preparación; ver
+`web/src/lib/lectorBoleta.ts`).
 
 **01/10/2026**, 60 boletas falsas (cinco niveles de foto) + la boleta real de Macromercado y
 12 versiones, leyendo el recorte. Precio exacto:
@@ -108,6 +110,26 @@ para probar, no es un dato real), con 3 versiones de cada forma de llegar:
 | captura de la galería, por WhatsApp | 95 % | 100 % |
 | leve / media | 100 % | 100 % |
 | fuerte | 29 % | 29 % |
+
+**Boletas inventadas de Disco y Tata** (cantidad al principio: "1  LECHE UHT ENTERA 1L
+64,90  64,90"), una limpia y una gastada de cada una, con 15 versiones (whatsapp, captura,
+leve, media, fuerte). Precio exacto leyendo el recorte, todas las versiones juntas:
+
+| Boleta | Una lectura | Dos lecturas (normal y con el fondo aplanado) |
+|---|---|---|
+| Disco limpia | 79 % | 88 % (original 100 %, WhatsApp 93 %) |
+| Tata limpia | 91 % | 97 % (original 100 %) |
+| Disco gastada | 9 % | 21 % |
+| Tata gastada | 9 % | 26 % |
+| Macromercado inventada | 97 % | 97 % |
+| Boletas falsas (60) | 58 % | 65 % |
+
+Lo que hizo falta: sacar la cantidad del principio y los signos sueltos alrededor del nombre,
+no cortar números que son parte del nombre ("150G" leído "1506"), y leer dos veces: aplanar
+el fondo (dividir por una copia muy borrosa) rescata el papel manchado y arrugado, pero
+empeora la tinta muy gastada, así que la web lee de las dos formas y se queda con la que
+encontró más productos (`PASADAS` en `lectorBoleta.ts`). Tarda un poco más (1 a 3 segundos
+extra en una computadora).
 
 La diferencia con la boleta real no es "archivo o WhatsApp" sino **la impresión**: con tinta
 negra y nítida aguanta WhatsApp y capturas; con tinta térmica gris y gastada, no tanto.
