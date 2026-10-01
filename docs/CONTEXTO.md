@@ -298,9 +298,29 @@ Para el objetivo actual (web de compras al menor costo en Uruguay):
    cuadrícula que no le gustó a Augusto. Botón de tema (sol/luna): por defecto sigue al sistema; la elección se guarda en el
    navegador y un script en `index.html` la aplica antes de dibujar (sin destello). El CSS
    usa `:root[data-tema="oscuro"]` en lugar de `prefers-color-scheme`.
+4b. ~~Web estática publicada~~ ✅ (30/09/2026): Augusto todavía no puede pagar un servidor,
+   así que la web se publica gratis en **GitHub Pages** (https://kenymtz.github.io/canasta-uy/).
+   `pipelines/exportar/web_estatica.py` exporta mart a `web/public/datos/` (`base.json`:
+   ciudades, genéricos y comercios, 170 KB; `precios.json`: 76 mil precios vigentes en filas
+   cortas, 1,2 MB, 250 KB comprimido). Con `VITE_MODO=estatico`, `web/src/lib/api.ts` usa
+   `estatico.ts`, que lee esos archivos y cotiza en el navegador con `cotizar.ts` (copia de
+   `mart.cotizar_canasta`: **si se cambia una, hay que cambiar la otra**). Paridad
+   verificada con `src/lib/paridad.test.ts` (400 canastas, 4.864 comercios idénticos). Para
+   lograrla: distancia con Vincenty sobre el elipsoide WGS84 (como PostGIS; con una esfera
+   difería 50 m en 20 km), orden alfabético como `en_US.utf8` (ignora espacios, ñ = n) y
+   desempate por id del producto cuando dos opciones cuestan lo mismo (se agregó también en
+   el SQL). Rutas de `public/` con `rutaPublica()` (`BASE_URL`, porque Pages sirve en
+   `/canasta-uy/`). Se arregló de paso el build de producción del mapa: el worker de
+   MapLibre se importa con `?worker&url` (con `?url` faltaba `maplibre-gl-shared.mjs`).
+   Workflow `.github/workflows/publicar.yml`: en cada push a main que toque `web/` compila y
+   publica; el día 5 de cada mes (o a mano) corre el pipeline con `--liviano` (solo
+   `precios_2026.csv`, 1 GB) en un Postgres temporal, exporta y, si cambiaron los datos,
+   hace un commit y publica. **Cuando salga el dataset del SIPC 2027 hay que agregar su URL
+   en `RECURSOS`** (es otro dataset, con otro id).
 5. **Usuarios y tickets:** cuentas, subir el ticket (investigar el QR del CFE de la DGI;
    si no alcanza, foto + extracción con IA), comparar con la compra anterior.
-6. Calidad: guardar el reporte de cada carga en una tabla. Despliegue en un VPS.
+6. Calidad: guardar el reporte de cada carga en una tabla. Servidor propio cuando se pueda
+   pagar (o Oracle Cloud Always Free): lo necesitan las cuentas y los tickets del paso 5.
 
 Fuera de alcance por ahora: SEPA, tipos de cambio (PTAX/BCU/BCRA), NFC-e de Brasil.
 

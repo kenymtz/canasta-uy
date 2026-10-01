@@ -8,6 +8,8 @@ ticket y ver cómo te fue comparado con tu compra anterior.
 Construida sobre los **datos abiertos oficiales del SIPC** (Sistema de Información de
 Precios al Consumidor): 40 millones de precios de 2025 y 2026 en casi 900 comercios de todo el país.
 
+**👉 Probala: [kenymtz.github.io/canasta-uy](https://kenymtz.github.io/canasta-uy/)**
+
 > 🚧 Proyecto en construcción. Ver [hoja de ruta](#hoja-de-ruta).
 
 ![Canasta UY en la computadora: mapa de Salto con los totales de cada comercio y el panel para armar la canasta](docs/img/web-escritorio.png)
@@ -52,7 +54,20 @@ flowchart LR
 
     MART --> API["API<br/>FastAPI"] --> WEB["Web<br/>React + MapLibre"]
     MART --> MB["Metabase<br/>análisis"]
+    MART --> JSON["JSON estáticos"] --> PAGES["GitHub Pages<br/>cotiza en el navegador"]
 ```
+
+### Dos formas de correr la web
+
+- **Con servidor (desarrollo):** la web le pregunta a la API, que le pregunta a Postgres.
+- **Estática (la versión publicada):** un script exporta los precios vigentes a dos archivos
+  JSON (~1,3 MB, ~280 KB comprimidos) y la canasta se cotiza en el navegador con
+  [`web/src/lib/cotizar.ts`](web/src/lib/cotizar.ts), una copia en TypeScript de la función
+  SQL `mart.cotizar_canasta`. Un test compara las dos con cientos de canastas al azar y
+  tienen que dar exactamente lo mismo (comercios, totales, detalle y distancias).
+  Un workflow de GitHub Actions ([`publicar.yml`](.github/workflows/publicar.yml)) baja el
+  SIPC cada mes, lo carga en un Postgres temporal, regenera los archivos y vuelve a publicar.
+  Sin servidor y sin costo.
 
 ### Capas de datos
 
@@ -91,6 +106,10 @@ docker compose run --rm pipelines python -m pipelines.fuentes.sipc
 # Tests de la API (contra la base cargada)
 docker compose run --rm pipelines pytest -v
 
+# Web estática: exportar los precios y comparar la cotización del navegador con la de la base
+docker compose run --rm pipelines python -m pipelines.exportar.web_estatica
+docker compose exec -e PARIDAD_API=http://api:8000 web npx vitest run src/lib/paridad.test.ts
+
 # Notebooks: Jupyter Lab con el mismo entorno (el token aparece en los logs)
 docker compose --profile jupyter up -d
 docker compose logs jupyter
@@ -113,6 +132,8 @@ docker compose logs jupyter
 ├── sql/init/                # extensiones, esquema, datos base, vistas y tablas raw
 ├── sql/transform/           # transformaciones raw → core (una por fuente)
 ├── pipelines/fuentes/       # ingesta por fuente (SIPC)
+├── pipelines/exportar/      # exportación de mart a JSON para la web estática
+├── .github/workflows/       # publicación en GitHub Pages y actualización mensual
 ├── api/                     # API (FastAPI): ciudades, genéricos, comercios y cotización
 ├── tests/                   # tests de la API
 ├── web/                     # web (React + Vite): mapa, canasta y tickets
@@ -134,7 +155,7 @@ docker compose logs jupyter
 - [ ] Cuentas de usuario y carga de tickets (QR del CFE o foto con IA)
 - [ ] Comparación con la compra anterior
 - [ ] Controles de calidad guardados por carga
-- [ ] Despliegue público
+- [x] Despliegue público gratis: web estática en GitHub Pages, actualizada sola cada mes
 
 ## Aviso
 

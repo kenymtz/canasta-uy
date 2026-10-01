@@ -17,6 +17,7 @@ Uso:
     python -m pipelines.fuentes.sipc
     python -m pipelines.fuentes.sipc --solo productos establecimientos
     python -m pipelines.fuentes.sipc --solo core catalogo mart
+    python -m pipelines.fuentes.sipc --liviano     (solo el archivo de precios más nuevo)
 """
 
 import argparse
@@ -215,6 +216,10 @@ def main() -> None:
     pasos = [*RECURSOS, "core", "catalogo", "mart"]
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--solo", nargs="+", choices=pasos, default=pasos)
+    # La web solo usa los precios del último mes: alcanza con el archivo del año más nuevo.
+    # Así la actualización automática (GitHub Actions) baja 1 GB en lugar de 3.
+    parser.add_argument("--liviano", action="store_true",
+                        help="cargar solo el archivo de precios más reciente")
     args = parser.parse_args()
 
     from pipelines.comun.db import conectar
@@ -234,8 +239,9 @@ def main() -> None:
                 refrescar_mart(conn)
                 continue
             recurso = RECURSOS[nombre]
-            archivos = [DESTINO / url.rsplit("/", 1)[1] for url in recurso["urls"]]
-            for url, archivo in zip(recurso["urls"], archivos):
+            urls = recurso["urls"][-1:] if args.liviano else recurso["urls"]
+            archivos = [DESTINO / url.rsplit("/", 1)[1] for url in urls]
+            for url, archivo in zip(urls, archivos):
                 descargar(url, archivo)
                 validar_encabezado(archivo, recurso["encoding"], recurso["encabezado"])
             filas = cargar(conn, archivos, recurso["tabla"], recurso["opciones"])

@@ -1,0 +1,107 @@
+# Publica la web estática en GitHub Pages y la mantiene al día con el SIPC.
+#
+#   - Cada push a main que toque la web: compila y publica (con los datos que ya están en el repo).
+#   - El día 5 de cada mes (o a mano, desde la pestaña Actions): baja el SIPC, lo carga en un
+#     Postgres temporal, exporta los precios vigentes y, si cambiaron, los guarda en el repo
+#     con un commit. Después publica.
+#
+# Todo corre en máquinas de GitHub, gratis para repos públicos: no hace falta un servidor.
+
+name: Publicar la web
+
+on:
+  push:
+    branches: [main]
+    paths: ["web/**", ".github/workflows/publicar.yml"]
+  schedule:
+    - cron: "0 9 5 * *" # día 5 de cada mes, 06:00 en Uruguay
+  workflow_dispatch:
+    inputs:
+      actualizar_datos:
+        description: "Bajar el SIPC y actualizar los precios antes de publicar"
+        type: boolean
+        default: true
+
+# Dos publicaciones a la vez se pisarían: la segunda espera a que termine la primera
+concurrency:
+  group: publicar
+  cancel-in-progress: false
+
+jobs:
+  datos:
+    if: github.event_name == 'schedule' || inputs.actualizar_datos
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write # para guardar los precios nuevos con un commit
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Preparar el .env con una clave al azar (la base vive solo durante esta corrida)
+        run: |
+          cp .env.example .env
+          sed -i "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(openssl rand -hex 24)/" .env
+
+      - name: Levantar Postgres
+        run: docker compose up -d --wait postgres
+
+      - name: Bajar el SIPC y pasarlo por raw, core y mart
+        run: docker compose run --rm pipelines python -m pipelines.fuentes.sipc --liviano
+
+      - name: Exportar los precios vigentes para la web
+        run: docker compose run --rm pipelines python -m pipelines.exportar.web_estatica
+
+      - name: Guardar los datos si cambiaron
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web/public/datos
+          if git diff --cached --quiet; then
+            echo "El SIPC no trajo precios nuevos."
+          else
+            git commit -m "Datos: precios del SIPC al $(jq -r .ultimo_precio web/public/datos/base.json)"
+            git push
+          fi
+
+  web:
+    needs: datos
+    # Corre también cuando "datos" se salteó (push a main), pero no si falló
+    if: ${{ !failure() && !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.publicacion.outputs.page_url }}
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main # incluye el commit de datos que pudo hacer el paso anterior
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+
+      - name: Compilar la versión estática
+        run: npm run build
+        env:
+          VITE_MODO: estatico
+          VITE_BASE: /${{ github.event.repository.name }}/
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: web/dist
+
+      - id: publicacion
+        uses: actions/deploy-pages@v5
