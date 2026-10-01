@@ -41,21 +41,24 @@ que no están en el repo.
 
 ## Paso 2. Ubicación física
 
-Servidores de Supabase Inc. (sobre Amazon Web Services), región `eu-central-1`, Frankfurt,
-Alemania (Unión Europea). No hay copias en papel ni en otros lugares.
+Servidores de Supabase (sobre Amazon Web Services), región `eu-central-1`, Frankfurt, Alemania
+(Unión Europea). La ubicación corresponde a un tercero; Amazon no publica la dirección exacta
+del centro de datos. No hay copias en papel ni ubicaciones alternativas.
 
 ## Paso 3. Tratamiento
 
 Lo realiza el propio responsable. Proveedores que intervienen como encargados:
 
-- **Supabase Inc.:** base de datos e inicio de sesión. Guarda los datos.
-- **Google LLC:** el inicio de sesión con Google. Canasta UY recibe de Google el correo, el
+- **Supabase Pte. Ltd.** (encargado, se carga en 4.2): base de datos e inicio de sesión;
+  guarda los datos. 65 Chulia Street #38-02/03, OCBC Centre, Singapore 049513, Singapur;
+  privacy@supabase.com. Fuente: su [acuerdo de tratamiento de datos](https://supabase.com/legal/dpa).
+- **Google LLC** (no se carga como encargado: es responsable de sus propios datos): el inicio de sesión con Google. Canasta UY recibe de Google el correo, el
   nombre y un identificador; no recibe ni guarda la contraseña.
-- **Cloudflare Inc.:** sirve la página web, que es estática; no recibe datos de la base.
+- **Cloudflare Inc.** (no se carga: no toca la base): sirve la página web, que es estática.
 
 ## Paso 4. Contacto técnico
 
-Augusto Calfani (los mismos datos del titular).
+Augusto Calfani (los mismos datos del titular), dependiente del titular.
 
 ## Paso 5. Dónde se ejercen los derechos
 
@@ -95,8 +98,8 @@ No es una base comercial ni crediticia: 0 en todos los casilleros.
 - **9.5 Finalidad:** mostrarle al usuario su historial de compras y compararlo con sus compras
   anteriores. No se usan para publicidad ni perfiles, no se venden ni se ceden a terceros.
 - **Comunicaciones o cesiones:** ninguna.
-- **Transferencias internacionales:** sí, a Alemania (Unión Europea) por el proveedor de la
-  base. Confirmar en el formulario que la UE figura entre los destinos con nivel de protección
+- **Transferencias internacionales:** sí: los datos se guardan en Alemania (Unión Europea) y
+  el encargado (Supabase Pte. Ltd.) es de Singapur. Confirmar en el formulario que la UE figura entre los destinos con nivel de protección
   adecuado reconocidos por la URCDP.
 - **Información al titular:** la página de privacidad lo explica, y al iniciar sesión se avisa
   que entrar implica aceptarla.
