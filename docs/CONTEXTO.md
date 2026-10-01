@@ -299,7 +299,11 @@ Para el objetivo actual (web de compras al menor costo en Uruguay):
    navegador y un script en `index.html` la aplica antes de dibujar (sin destello). El CSS
    usa `:root[data-tema="oscuro"]` en lugar de `prefers-color-scheme`.
 4b. ~~Web estática publicada~~ ✅ (30/09/2026): Augusto todavía no puede pagar un servidor,
-   así que la web se publica gratis en **GitHub Pages** (https://kenymtz.github.io/canasta-uy/).
+   así que la web se publica gratis en **Cloudflare Pages** (https://canastauy.pages.dev; al
+   principio estuvo en GitHub Pages, que ahora solo redirige a la dirección nueva).
+   `canasta-uy.pages.dev` ya lo usaba otra persona. El workflow publica con `wrangler` usando
+   los secretos `CLOUDFLARE_API_TOKEN` (permiso Cloudflare Pages: Edit) y
+   `CLOUDFLARE_ACCOUNT_ID` del repo; la cuenta de Cloudflare es de Augusto.
    `pipelines/exportar/web_estatica.py` exporta mart a `web/public/datos/` (`base.json`:
    ciudades, genéricos y comercios, 170 KB; `precios.json`: 76 mil precios vigentes en filas
    cortas, 1,2 MB, 250 KB comprimido). Con `VITE_MODO=estatico`, `web/src/lib/api.ts` usa
@@ -309,7 +313,7 @@ Para el objetivo actual (web de compras al menor costo en Uruguay):
    lograrla: distancia con Vincenty sobre el elipsoide WGS84 (como PostGIS; con una esfera
    difería 50 m en 20 km), orden alfabético como `en_US.utf8` (ignora espacios, ñ = n) y
    desempate por id del producto cuando dos opciones cuestan lo mismo (se agregó también en
-   el SQL). Rutas de `public/` con `rutaPublica()` (`BASE_URL`, porque Pages sirve en
+   el SQL). Rutas de `public/` con `rutaPublica()` (`BASE_URL`, por si la web vive en una subcarpeta, como pasaba en GitHub Pages con
    `/canasta-uy/`). Se arregló de paso el build de producción del mapa: el worker de
    MapLibre se importa con `?worker&url` (con `?url` faltaba `maplibre-gl-shared.mjs`).
    Workflow `.github/workflows/publicar.yml`: en cada push a main que toque `web/` compila y

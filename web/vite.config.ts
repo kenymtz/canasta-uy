@@ -4,7 +4,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  // En GitHub Pages la web vive en /canasta-uy/ (lo define el workflow de publicación)
+  // Carpeta donde vive la web publicada: "/" en Cloudflare Pages; VITE_BASE la cambia si hace falta
   base: process.env.VITE_BASE ?? "/",
   // El único archivo grande es el del mapa (MapLibre, ~1 MB), y se carga aparte
   build: { chunkSizeWarningLimit: 1100 },

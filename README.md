@@ -8,7 +8,7 @@ ticket y ver cómo te fue comparado con tu compra anterior.
 Construida sobre los **datos abiertos oficiales del SIPC** (Sistema de Información de
 Precios al Consumidor): 40 millones de precios de 2025 y 2026 en casi 900 comercios de todo el país.
 
-**👉 Probala: [kenymtz.github.io/canasta-uy](https://kenymtz.github.io/canasta-uy/)**
+**👉 Probala: [canastauy.pages.dev](https://canastauy.pages.dev/)**
 
 > 🚧 Proyecto en construcción. Ver [hoja de ruta](#hoja-de-ruta).
 
@@ -54,7 +54,7 @@ flowchart LR
 
     MART --> API["API<br/>FastAPI"] --> WEB["Web<br/>React + MapLibre"]
     MART --> MB["Metabase<br/>análisis"]
-    MART --> JSON["JSON estáticos"] --> PAGES["GitHub Pages<br/>cotiza en el navegador"]
+    MART --> JSON["JSON estáticos"] --> PAGES["Cloudflare Pages<br/>cotiza en el navegador"]
 ```
 
 ### Dos formas de correr la web
@@ -133,7 +133,7 @@ docker compose logs jupyter
 ├── sql/transform/           # transformaciones raw → core (una por fuente)
 ├── pipelines/fuentes/       # ingesta por fuente (SIPC)
 ├── pipelines/exportar/      # exportación de mart a JSON para la web estática
-├── .github/workflows/       # publicación en GitHub Pages y actualización mensual
+├── .github/workflows/       # publicación en Cloudflare Pages y actualización mensual
 ├── api/                     # API (FastAPI): ciudades, genéricos, comercios y cotización
 ├── tests/                   # tests de la API
 ├── web/                     # web (React + Vite): mapa, canasta y tickets
@@ -155,7 +155,7 @@ docker compose logs jupyter
 - [ ] Cuentas de usuario y carga de tickets (QR del CFE o foto con IA)
 - [ ] Comparación con la compra anterior
 - [ ] Controles de calidad guardados por carga
-- [x] Despliegue público gratis: web estática en GitHub Pages, actualizada sola cada mes
+- [x] Despliegue público gratis: web estática en Cloudflare Pages, actualizada sola cada mes
 
 ## Aviso
 
