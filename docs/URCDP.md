@@ -83,7 +83,14 @@ No es una base comercial ni crediticia: 0 en todos los casilleros.
   Authentication → Users].
 - **Tipos de información:**
   - *Identificatorios:* correo electrónico, nombre, identificador de cuenta.
-  - *Hábitos de consumo:* compras (fecha, monto total, empresa, comercio y productos con precio).
+  - *Información comercial (hábitos de consumo):* compras (fecha, monto total, empresa, comercio y
+    productos con precio).
+  - *Otros datos:* lo que guarda el sistema de inicio de sesión (Supabase) al entrar con Google:
+    enlace a la foto de perfil de Google (la web no la usa), fecha y dirección IP de los inicios
+    de sesión.
+  - *Características personales, económico-financieros, especialmente protegidos:* no.
+  - *Personas jurídicas sometidas al tratamiento:* 0 (el RUT del comercio es un dato de la
+    compra; los titulares son los usuarios).
 - **Datos sensibles:** no se piden. Aclaración: si un usuario compra productos de farmacia, su
   nombre puede aparecer en el detalle de la compra; no se usan para inferir nada.
 - **No se guardan:** las fotos de los tickets (se leen en el teléfono y no se suben), datos de
