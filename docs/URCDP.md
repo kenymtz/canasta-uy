@@ -98,15 +98,17 @@ No es una base comercial ni crediticia: 0 en todos los casilleros.
 
 ## Paso 9. Obtención y tratamiento
 
-- **9.1 Medios de obtención:** el propio usuario, desde la web, cuando guarda una compra.
-- **9.2 Origen:** el propio interesado (y Google, para el correo y el nombre).
-- **9.3 Soporte:** vía telemática (formulario web).
-- **9.4 Conservación:** hasta que el usuario borre la compra o la cuenta.
+- **Procedencia:** proporcionado por el interesado, y otras personas jurídicas (Google LLC
+  entrega el correo, el nombre y el identificador al iniciar sesión).
+- **Procedimientos:** formularios y transmisión electrónica.
+- **9.4 Conservación (Otros):** hasta que el usuario borre la compra o su cuenta desde la web,
+  o lo pida por correo a uycanasta@gmail.com. Al borrar la cuenta se eliminan todas sus compras.
 - **9.5 Finalidad:** mostrarle al usuario su historial de compras y compararlo con sus compras
   anteriores. No se usan para publicidad ni perfiles, no se venden ni se ceden a terceros.
 - **Comunicaciones o cesiones:** ninguna.
-- **Transferencias internacionales:** sí: los datos se guardan en Alemania (Unión Europea) y
-  el encargado (Supabase Pte. Ltd.) es de Singapur. Confirmar en el formulario que la UE figura entre los destinos con nivel de protección
+- **Transferencias internacionales:** sí. País adecuado: **Unión Europea** (los datos se guardan
+  en Frankfurt, Alemania). País no adecuado: **Singapur**, sede del proveedor (Supabase Pte.
+  Ltd.), con cláusulas contractuales tipo en su [acuerdo de tratamiento de datos](https://supabase.com/legal/dpa). Confirmar en el formulario que la UE figura entre los destinos con nivel de protección
   adecuado reconocidos por la URCDP.
 - **Información al titular:** la página de privacidad lo explica, y al iniciar sesión se avisa
   que entrar implica aceptarla.
