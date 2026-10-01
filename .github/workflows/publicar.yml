@@ -1,4 +1,5 @@
-# Publica la web estática en GitHub Pages y la mantiene al día con el SIPC.
+# Publica la web estática en Cloudflare Pages (https://canastauy.pages.dev) y la mantiene al
+# día con el SIPC. La dirección vieja de GitHub Pages queda redirigiendo a la nueva.
 #
 #   - Cada push a main que toque la web: compila y publica (con los datos que ya están en el repo).
 #   - El día 5 de cada mes (o a mano, desde la pestaña Actions): baja el SIPC, lo carga en un
@@ -97,11 +98,36 @@ jobs:
         run: npm run build
         env:
           VITE_MODO: estatico
-          VITE_BASE: /${{ github.event.repository.name }}/
+
+      # Las claves están en Settings → Secrets and variables → Actions (nunca en el código)
+      - name: Publicar en Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          # La primera vez crea el proyecto; después ya existe y se saltea
+          if ! npx --yes wrangler@4 pages project list | grep -qw canastauy; then
+            npx --yes wrangler@4 pages project create canastauy --production-branch=main
+          fi
+          npx --yes wrangler@4 pages deploy dist --project-name=canastauy --branch=main
+
+      - name: Armar la redirección de la dirección vieja
+        run: |
+          mkdir -p redireccion
+          for pagina in index.html 404.html; do
+            cat > redireccion/$pagina <<'HTML'
+          <!doctype html>
+          <meta charset="utf-8">
+          <title>Canasta UY se mudó</title>
+          <meta http-equiv="refresh" content="0; url=https://canastauy.pages.dev/">
+          <link rel="canonical" href="https://canastauy.pages.dev/">
+          <p>Canasta UY se mudó a <a href="https://canastauy.pages.dev/">canastauy.pages.dev</a>.</p>
+          HTML
+          done
 
       - uses: actions/upload-pages-artifact@v5
         with:
-          path: web/dist
+          path: web/redireccion
 
       - id: publicacion
         uses: actions/deploy-pages@v5
