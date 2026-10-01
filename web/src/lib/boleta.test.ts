@@ -83,3 +83,41 @@ TOTAL DE COMPRAS  218,00
     expect(leerBoleta("TM. 82,17\na 1,00\nPAN 45,90").productos).toEqual([{ descripcion: "PAN", precio: 45.9 }]);
   });
 });
+
+describe("leerBoleta con lo que agrega el lector de la foto", () => {
+  it("acepta un espacio después de la coma y un signo al final del monto", () => {
+    expect(leerBoleta("35483 JABON BARRA BULL DOG 1,000 407,32   407, 32B\nFRANKFURTERS OTTONELLO  250,42?").productos).toEqual([
+      { descripcion: "JABON BARRA BULL DOG", precio: 407.32 },
+      { descripcion: "FRANKFURTERS OTTONELLO", precio: 250.42 },
+    ]);
+  });
+
+  it("junta los productos en dos renglones: nombre arriba, cantidad por precio abajo", () => {
+    const texto = `Descripcion                  Importe
+QUESO RALLADO ARTESANO 80GRS
+
+2 x 176,55                     353,10
+AFEITADORA XTREME3 PIEL DELICAD    454,52
+PALETA VACUNA SIN MARCA 1KG
+2 x 101,13                     202,26`;
+    expect(leerBoleta(texto).productos).toEqual([
+      { descripcion: "QUESO RALLADO ARTESANO 80GRS", precio: 353.1 },
+      { descripcion: "AFEITADORA XTREME3 PIEL DELICAD", precio: 454.52 },
+      { descripcion: "PALETA VACUNA SIN MARCA 1KG", precio: 202.26 },
+    ]);
+  });
+
+  it("ante la duda gana la privacidad: \"XxX 176\" parece una tarjeta tapada y se borra", () => {
+    const lectura = leerBoleta("QUESO RALLADO 80GRS\n2 XxX 176,55   353,10");
+    expect(lectura.productos).toEqual([]);
+    expect(lectura.quitadas).toBe(1);
+  });
+
+  it("un renglón sensible nunca se usa como nombre del producto de abajo", () => {
+    expect(leerBoleta("CLIENTE: JUAN PEREZ\n2 x 10,00   20,00").productos).toEqual([]);
+  });
+
+  it("descarta el recuadro de impuestos aunque el lector lo lea mal", () => {
+    expect(leerBoleta("T.B.IM” 522,11").productos).toEqual([]);
+  });
+});

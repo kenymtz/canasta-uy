@@ -1,9 +1,11 @@
-import { ArrowClockwise, Camera, CheckCircle, EyeSlash, PencilSimple, Scissors, WarningCircle } from "@phosphor-icons/react";
+import { ArrowClockwise, CheckCircle, EyeSlash, PencilSimple, Scissors, WarningCircle } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import ReactCrop, { type Crop, convertToPixelCrop, type PixelCrop } from "react-image-crop";
 import "react-image-crop/dist/ReactCrop.css";
 
 import { type LecturaBoleta, leerBoleta, type ProductoBoleta } from "../lib/boleta";
+import { leerTexto } from "../lib/lectorBoleta";
+import { ElegirFoto } from "./ElegirFoto";
 import { RevisarProductos } from "./RevisarProductos";
 
 type Estado =
@@ -17,38 +19,6 @@ const botonPrincipal =
   "presionable inline-flex h-11 items-center gap-2 rounded-control bg-acento px-4 text-[15px] font-semibold text-sobre-acento disabled:opacity-50";
 const botonSecundario =
   "presionable inline-flex h-10 items-center gap-1.5 rounded-control border border-linea bg-ticket px-3 text-sm font-medium text-tinta hover:border-tinta-suave";
-
-/**
- * Lee el texto de la parte recortada, en el navegador (tesseract.js). La foto nunca sale del
- * teléfono: solo se descarga, una vez, el modelo del idioma español.
- */
-async function leerTexto(imagen: HTMLImageElement, recorte: PixelCrop, alProgreso: (p: number) => void) {
-  const escalaX = imagen.naturalWidth / imagen.width;
-  const escalaY = imagen.naturalHeight / imagen.height;
-  const ancho = recorte.width * escalaX;
-  const alto = recorte.height * escalaY;
-  const aumento = Math.max(1, 2400 / ancho); // los tickets tienen letra chica: ampliar ayuda
-  const lienzo = document.createElement("canvas");
-  lienzo.width = Math.round(ancho * aumento);
-  lienzo.height = Math.round(alto * aumento);
-  const ctx = lienzo.getContext("2d")!;
-  ctx.filter = "grayscale(1) contrast(1.4)"; // papel térmico: gris claro sobre blanco
-  ctx.drawImage(imagen, recorte.x * escalaX, recorte.y * escalaY, ancho, alto, 0, 0, lienzo.width, lienzo.height);
-
-  const { createWorker, PSM } = await import("tesseract.js"); // pesa: se carga solo si se usa
-  const trabajador = await createWorker("spa", 1, {
-    logger: (m) => m.status === "recognizing text" && alProgreso(m.progress),
-  });
-  // Un ticket es un solo bloque de renglones: leerlo así (en lugar de buscar columnas y
-  // párrafos sueltos) mantiene cada producto en la misma línea que su precio
-  await trabajador.setParameters({ tessedit_pageseg_mode: PSM.SINGLE_BLOCK, preserve_interword_spaces: "1" });
-  try {
-    const { data } = await trabajador.recognize(lienzo);
-    return data.text;
-  } finally {
-    await trabajador.terminate();
-  }
-}
 
 /** Mini boleta de ejemplo: productos claros, datos de pago y personales tachados. */
 function BoletaEjemplo() {
@@ -85,7 +55,6 @@ export function OpcionBoleta({ onListo }: { onListo: (productos: ProductoBoleta[
   const [estado, setEstado] = useState<Estado>({ fase: "inicio" });
   const [recorte, setRecorte] = useState<Crop>();
   const [recortePx, setRecortePx] = useState<PixelCrop>();
-  const entrada = useRef<HTMLInputElement>(null);
   const imagen = useRef<HTMLImageElement>(null);
 
   // La foto vive solo en memoria del navegador; al terminar se libera
@@ -94,10 +63,8 @@ export function OpcionBoleta({ onListo }: { onListo: (productos: ProductoBoleta[
     if (url) URL.revokeObjectURL(url);
   }, [url]);
 
-  function alElegirFoto(archivo: File | undefined) {
-    if (!archivo) return;
+  function alElegirFoto(archivo: File) {
     setEstado({ fase: "recortar", url: URL.createObjectURL(archivo) });
-    if (entrada.current) entrada.current.value = "";
   }
 
   function alCargarImagen(e: React.SyntheticEvent<HTMLImageElement>) {
@@ -112,7 +79,16 @@ export function OpcionBoleta({ onListo }: { onListo: (productos: ProductoBoleta[
     const img = imagen.current;
     setEstado({ fase: "leyendo", progreso: 0 });
     try {
-      const texto = await leerTexto(img, recortePx, (progreso) => setEstado({ fase: "leyendo", progreso }));
+      // El recorte se marca sobre la foto achicada en pantalla: se pasa a píxeles de la original
+      const escalaX = img.naturalWidth / img.width;
+      const escalaY = img.naturalHeight / img.height;
+      const recorte = {
+        x: recortePx.x * escalaX,
+        y: recortePx.y * escalaY,
+        ancho: recortePx.width * escalaX,
+        alto: recortePx.height * escalaY,
+      };
+      const texto = await leerTexto(img, recorte, (progreso) => setEstado({ fase: "leyendo", progreso }));
       const lectura = leerBoleta(texto);
       setEstado(
         lectura.productos.length
@@ -133,17 +109,6 @@ export function OpcionBoleta({ onListo }: { onListo: (productos: ProductoBoleta[
         </p>
         <BoletaEjemplo />
       </div>
-
-      <input
-        ref={entrada}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="sr-only"
-        tabIndex={-1}
-        aria-hidden
-        onChange={(e) => alElegirFoto(e.target.files?.[0])}
-      />
 
       {estado.fase === "recortar" && (
         <div className="imprimir flex flex-col gap-3">
@@ -222,12 +187,7 @@ export function OpcionBoleta({ onListo }: { onListo: (productos: ProductoBoleta[
 
       {(estado.fase === "inicio" || estado.fase === "error") && (
         <div className="flex flex-col gap-2">
-          <div>
-            <button type="button" className={botonPrincipal} onClick={() => entrada.current?.click()}>
-              <Camera size={20} weight="bold" aria-hidden />
-              Sacar foto de la boleta
-            </button>
-          </div>
+          <ElegirFoto sacar="Sacar foto de la boleta" onArchivo={alElegirFoto} />
           {estado.fase === "error" && (
             <>
               <p className="flex gap-1.5 text-[13px] leading-snug text-alerta" role="alert">

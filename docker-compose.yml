@@ -4,6 +4,7 @@
 #   docker compose --profile n8n up -d   → además levanta un n8n propio del proyecto
 #   docker compose run --rm pipelines python -m pipelines.fuentes.sipc
 #   docker compose --profile jupyter up -d   → Jupyter Lab con el mismo entorno
+#   docker compose run --rm eval-boletas     → banco de pruebas del lector de boletas
 #
 # Si ya tenés un n8n corriendo aparte, no uses el perfil "n8n": conectalo a la base
 # con host "host.docker.internal" y el puerto POSTGRES_PORT (ver README).
@@ -136,7 +137,24 @@ services:
     ports:
       - "127.0.0.1:${JUPYTER_PORT:-8888}:8888"
 
+  # Banco de pruebas del lector de boletas (ver eval/boletas/README.md). Necesita la web
+  # andando: lee las boletas con el mismo código que usa la web.
+  eval-boletas:
+    image: mcr.microsoft.com/playwright:v1.63.0-noble
+    profiles: ["eval"]
+    depends_on: [web]
+    working_dir: /eval
+    environment:
+      WEB_URL: http://web:5173
+      CATALOGO: /datos/precios.json
+    command: sh -c "npm install --no-audit --no-fund && node generar.mjs $${CANTIDAD:-48} && node evaluar.mjs"
+    volumes:
+      - ./eval/boletas:/eval
+      - ./web/public/datos:/datos:ro
+      - pf_eval_node_modules:/eval/node_modules
+
 volumes:
+  pf_eval_node_modules:
   pf_pgdata:
   pf_n8n:
   pf_web_node_modules:

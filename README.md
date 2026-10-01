@@ -106,6 +106,9 @@ docker compose run --rm pipelines python -m pipelines.fuentes.sipc
 # Tests de la API (contra la base cargada)
 docker compose run --rm pipelines pytest -v
 
+# Banco de pruebas del lector de boletas (ver eval/boletas/README.md)
+docker compose run --rm eval-boletas
+
 # Web estática: exportar los precios y comparar la cotización del navegador con la de la base
 docker compose run --rm pipelines python -m pipelines.exportar.web_estatica
 docker compose exec -e PARIDAD_API=http://api:8000 web npx vitest run src/lib/paridad.test.ts
@@ -140,7 +143,7 @@ docker compose logs jupyter
 ├── web/                     # web (React + Vite): mapa, canasta y tickets
 ├── docs/                    # contexto del proyecto y fuentes de datos
 ├── notebooks/               # exploración de datos
-├── eval/                    # conjuntos de prueba y métricas
+├── eval/boletas/            # banco de pruebas del lector de boletas (boletas falsas + métricas)
 └── data/                    # datos descargados (no se versionan)
 ```
 

@@ -23,3 +23,10 @@ n8n/**/credentials*.json
 # Sistema
 .DS_Store
 Thumbs.db
+
+# Banco de pruebas de boletas: lo generado se rehace con un comando y las fotos reales pueden
+# tener datos personales (nunca se suben)
+eval/boletas/node_modules/
+eval/boletas/generadas/
+eval/boletas/resultados/
+eval/boletas/reales/

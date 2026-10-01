@@ -1,9 +1,10 @@
-import { ArrowClockwise, Camera, CheckCircle, QrCode, WarningCircle } from "@phosphor-icons/react";
+import { ArrowClockwise, CheckCircle, QrCode, WarningCircle } from "@phosphor-icons/react";
 import jsQR from "jsqr";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 import { formatoPlata } from "../lib/formato";
 import { type CompraQr, leerQrDgi } from "../lib/qrDgi";
+import { ElegirFoto } from "./ElegirFoto";
 
 type Estado =
   | { fase: "inicio" }
@@ -11,8 +12,6 @@ type Estado =
   | { fase: "leido"; compra: CompraQr }
   | { fase: "error"; mensaje: string };
 
-const botonPrincipal =
-  "presionable inline-flex h-11 items-center gap-2 rounded-control bg-acento px-4 text-[15px] font-semibold text-sobre-acento";
 const botonSecundario =
   "presionable inline-flex h-10 items-center gap-1.5 rounded-control border border-linea bg-ticket px-3 text-sm font-medium text-tinta hover:border-tinta-suave";
 
@@ -65,10 +64,8 @@ function TicketEjemplo() {
 /** Opción 1: leer solo el QR (comercio, fecha y total). */
 export function OpcionQr({ onLeido }: { onLeido: (compra: CompraQr) => void }) {
   const [estado, setEstado] = useState<Estado>({ fase: "inicio" });
-  const entrada = useRef<HTMLInputElement>(null);
 
-  async function alElegirFoto(archivo: File | undefined) {
-    if (!archivo) return;
+  async function alElegirFoto(archivo: File) {
     setEstado({ fase: "leyendo" });
     try {
       const texto = await leerQrDeFoto(archivo);
@@ -85,8 +82,6 @@ export function OpcionQr({ onLeido }: { onLeido: (compra: CompraQr) => void }) {
       if (compra) onLeido(compra);
     } catch {
       setEstado({ fase: "error", mensaje: "No pudimos abrir la foto. Probá con otra." });
-    } finally {
-      if (entrada.current) entrada.current.value = ""; // permite elegir la misma foto otra vez
     }
   }
 
@@ -99,17 +94,6 @@ export function OpcionQr({ onLeido }: { onLeido: (compra: CompraQr) => void }) {
         </p>
         <TicketEjemplo />
       </div>
-
-      <input
-        ref={entrada}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="sr-only"
-        tabIndex={-1}
-        aria-hidden
-        onChange={(e) => alElegirFoto(e.target.files?.[0])}
-      />
 
       {estado.fase === "leido" ? (
         <div className="imprimir flex flex-col gap-3" aria-live="polite">
@@ -130,7 +114,7 @@ export function OpcionQr({ onLeido }: { onLeido: (compra: CompraQr) => void }) {
             ))}
           </dl>
           <div>
-            <button type="button" className={botonSecundario} onClick={() => entrada.current?.click()}>
+            <button type="button" className={botonSecundario} onClick={() => setEstado({ fase: "inicio" })}>
               <ArrowClockwise size={18} aria-hidden />
               Escanear otro
             </button>
@@ -138,12 +122,12 @@ export function OpcionQr({ onLeido }: { onLeido: (compra: CompraQr) => void }) {
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          <div>
-            <button type="button" className={botonPrincipal} disabled={estado.fase === "leyendo"} onClick={() => entrada.current?.click()}>
-              <Camera size={20} weight="bold" aria-hidden />
-              {estado.fase === "leyendo" ? "Leyendo el código..." : "Escanear el QR"}
-            </button>
-          </div>
+          <ElegirFoto
+            sacar={estado.fase === "leyendo" ? "Leyendo el código..." : "Escanear el QR"}
+            deshabilitado={estado.fase === "leyendo"}
+            onArchivo={alElegirFoto}
+          />
+          <p className="text-[12.5px] leading-snug text-tinta-suave">También sirve una captura de pantalla del QR.</p>
           {estado.fase === "error" && (
             <p className="flex gap-1.5 text-[13px] leading-snug text-alerta" role="alert">
               <WarningCircle size={16} className="mt-px shrink-0" aria-hidden />

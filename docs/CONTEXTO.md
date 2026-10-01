@@ -367,7 +367,17 @@ Para el objetivo actual (web de compras al menor costo en Uruguay):
    la lista ahora se **revisa y corrige** antes de guardar (`RevisarProductos.tsx`), se puede
    escribir a mano y se avisa si la suma no coincide con el total del QR. Opción a futuro, con
    consentimiento explícito: leer el recorte con IA (Gemini), lo que rompería la promesa de
-   que la foto no sale del teléfono.
+   que la foto no sale del teléfono. **Augusto la descartó (01/10/2026): sin IA.**
+   Pedido de Augusto: poder **subir** una foto o captura además de sacarla (`ElegirFoto.tsx`,
+   en el QR y la boleta) y un **banco de pruebas** para generar muchas boletas y medir en
+   Docker: `eval/boletas/` (`docker compose run --rm eval-boletas`; ver su README). La lectura
+   se separó en `web/src/lib/lectorBoleta.ts` para que el banco use el mismo código que la
+   web. Primeros hallazgos y arreglos: el lector mete un espacio después de la coma
+   ("407, 32B") y signos al final ("250,42?"), y faltaban los productos en dos renglones
+   ("2 x 176,55   353,10"). Con eso, leyendo el recorte: de 40 % a 70 % de productos
+   encontrados (92 % con fotos limpias, 21 % con fotos muy dañadas) y 0 fugas. Decisión: un
+   renglón que parece tarjeta tapada ("XxX 176") se borra aunque sea un producto mal leído.
+   Las fotos reales van en `eval/boletas/reales/` (no se suben a GitHub).
 5. **Usuarios y tickets:** cuentas, subir el ticket (investigar el QR del CFE de la DGI;
    si no alcanza, foto + extracción con IA), comparar con la compra anterior.
 6. Calidad: guardar el reporte de cada carga en una tabla. Servidor propio cuando se pueda

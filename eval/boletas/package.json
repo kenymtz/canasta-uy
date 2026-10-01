@@ -1,0 +1,13 @@
+{
+  "name": "canasta-uy-eval-boletas",
+  "private": true,
+  "type": "module",
+  "description": "Banco de pruebas del lector de boletas: genera boletas falsas y mide qué tan bien las lee la web",
+  "scripts": {
+    "generar": "node generar.mjs",
+    "evaluar": "node evaluar.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.63.0"
+  }
+}
