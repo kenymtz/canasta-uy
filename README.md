@@ -131,6 +131,7 @@ docker compose logs jupyter
 ├── docker/python/           # imagen de los pipelines y notebooks
 ├── sql/init/                # extensiones, esquema, datos base, vistas y tablas raw
 ├── sql/transform/           # transformaciones raw → core (una por fuente)
+├── sql/supabase/            # cuentas de usuario: tabla de compras con Row Level Security
 ├── pipelines/fuentes/       # ingesta por fuente (SIPC)
 ├── pipelines/exportar/      # exportación de mart a JSON para la web estática
 ├── .github/workflows/       # publicación en Cloudflare Pages y actualización mensual

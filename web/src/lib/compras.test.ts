@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-import { anterior, cambiosDePrecio, type Compra, comercioSugerido, diferencia, idCompra, ordenar } from "./compras";
+import {
+  anterior,
+  cambiosDePrecio,
+  combinar,
+  type Compra,
+  comercioSugerido,
+  diferencia,
+  faltanEnLaCuenta,
+  idCompra,
+  ordenar,
+} from "./compras";
 import type { CompraQr } from "./qrDgi";
 
 const tata = { establecimiento_id: 7, nombre: "Ta - Ta - Hiper Salto", direccion: "19 de Abril y Soca", ciudad: "Salto" };
@@ -82,5 +92,22 @@ describe("comercioSugerido", () => {
     expect(comercioSugerido(compras, qr.ruc)).toEqual(tata);
     expect(comercioSugerido(compras, "nuevo")).toBeNull();
     expect(comercioSugerido(compras, null)).toBeNull();
+  });
+});
+
+describe("combinar y faltanEnLaCuenta", () => {
+  const soloTelefono = compra("t", "2026-09-01", 100);
+  const enLosDos = compra("d", "2026-09-02", 200);
+  const enLosDosDeLaCuenta = { ...enLosDos, comercio: tata };
+  const soloCuenta = compra("c", "2026-09-03", 300);
+
+  it("junta las dos listas sin repetir tickets y, si está en las dos, vale la de la cuenta", () => {
+    const juntas = combinar([soloTelefono, enLosDos], [enLosDosDeLaCuenta, soloCuenta]);
+    expect(juntas.map((c) => c.id).sort()).toEqual(["c", "d", "t"]);
+    expect(juntas.find((c) => c.id === "d")?.comercio).toEqual(tata);
+  });
+
+  it("sube solo las que no estaban en la cuenta", () => {
+    expect(faltanEnLaCuenta([soloTelefono, enLosDos], [enLosDosDeLaCuenta, soloCuenta])).toEqual([soloTelefono]);
   });
 });

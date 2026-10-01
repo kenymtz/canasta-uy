@@ -6,7 +6,7 @@ import { formatoPlata } from "../lib/formato";
 import type { Ubicacion } from "../store/canasta";
 import { useCompras } from "../store/compras";
 import { type Borrador, ConfirmarCompra } from "./ConfirmarCompra";
-import { AvisoCuenta } from "./MisCompras";
+import { Cuenta } from "./Cuenta";
 import { OpcionBoleta } from "./OpcionBoleta";
 import { OpcionQr } from "./OpcionQr";
 
@@ -152,7 +152,7 @@ export function SumarTicket({ ubicacion }: { ubicacion: Ubicacion | null }) {
 
       {guardada && <Guardada compra={guardada} />}
 
-      {!hayCompras && <AvisoCuenta />}
+      {!hayCompras && <Cuenta />}
     </section>
   );
 }

@@ -1,0 +1,25 @@
+# El plan gratis de Supabase pausa el proyecto si pasa una semana sin pedidos. Este workflow
+# le hace una consulta chiquita dos veces por semana para que siga despierto (si igual se
+# pausa, se reactiva desde el panel de Supabase; las compras guardadas no se pierden).
+
+name: Mantener Supabase despierto
+
+on:
+  schedule:
+    - cron: "0 12 * * 1,4" # lunes y jueves, 09:00 en Uruguay
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  consulta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Consultar la base
+        # La clave es la pública (la misma que usa la web). Sin sesión, la tabla responde
+        # "sin permiso": alcanza, porque el pedido llega igual hasta la base.
+        run: |
+          curl -sS -o /dev/null -w "Supabase respondió %{http_code}\n" \
+            "https://cbabonwbwvzpkisgmusn.supabase.co/rest/v1/compra?select=ticket_id&limit=1" \
+            -H "apikey: sb_publishable_xQeWmbE2tMxHZ4aVd9l2Gw_7uUXtM8j"

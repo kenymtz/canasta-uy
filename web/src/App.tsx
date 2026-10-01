@@ -9,6 +9,7 @@ import { SumarTicket } from "./components/SumarTicket";
 import { PUNTO_EN_EL_MAPA, Ubicacion } from "./components/Ubicacion";
 import { api, type Ciudad, type Comercio, type Generico } from "./lib/api";
 import { useCotizacion } from "./hooks/useCotizacion";
+import { useSesion } from "./hooks/useSesion";
 import { useCanasta } from "./store/canasta";
 
 // MapLibre pesa unos 800 KB: se carga aparte para que el panel aparezca enseguida
@@ -38,6 +39,7 @@ export default function App() {
   const [genericos, setGenericos] = useState<Generico[]>([]);
   const [seleccionado, setSeleccionado] = useState<number | null>(null);
   const genericosPorNombre = useMemo(() => new Map(genericos.map((g) => [g.nombre, g])), [genericos]);
+  useSesion();
   const cotizacion = useCotizacion({ ubicacion, radioKm, items, presupuesto, genericos: genericosPorNombre });
 
   // Con resultados nuevos, no queda nada abierto en la lista

@@ -340,6 +340,22 @@ Para el objetivo actual (web de compras al menor costo en Uruguay):
    inicio con Google, Row Level Security, región en Europa por la Ley 18.331), sincronizar el
    historial, botón para borrar cuenta y datos, página de privacidad, registro en la URCDP.
    Parte C (después): usar los tickets para actualizar precios públicos, con controles.
+5b. **Cuentas con Supabase** (código listo en la rama `cuentas`, sin publicar hasta que esté
+   configurado): proyecto `canasta-uy` de Augusto (organización "Augusto", plan Free, región
+   Central EU Frankfurt, Data API sí, exponer tablas solas no, RLS automática sí). URL
+   `https://cbabonwbwvzpkisgmusn.supabase.co` y clave publicable en `web/src/lib/nube.ts`
+   (son públicas; la secret key y la contraseña de la base nunca salen de Supabase).
+   `sql/supabase/01_compras.sql`: tabla `public.compra` (una fila por ticket y usuario, productos
+   en jsonb), RLS con una regla por acción (ver, guardar, borrar; sin editar), y
+   `borrar_mi_cuenta()` (SECURITY DEFINER, borra auth.users y en cascada sus compras). Probado
+   en local imitando Supabase: `sql/supabase/prueba_rls.sql` (incluye un control de que la
+   prueba detecta una regla rota). Web: `store/compras.ts` guarda siempre en el navegador y,
+   con sesión, también en la cuenta; al entrar sube lo que falta y trae lo de la cuenta; al
+   salir quita el historial del teléfono. `hooks/useSesion.ts`, `components/Cuenta.tsx`
+   (entrar con Google, salir, borrar cuenta), `public/privacidad.html`. Workflow
+   `mantener-supabase.yml`: dos consultas por semana para que el plan gratis no se pause.
+   Falta: correr el SQL en Supabase, configurar Google (OAuth) y probar con una cuenta real.
+   Antes de anunciarla: registrar la base en la URCDP.
 5. **Usuarios y tickets:** cuentas, subir el ticket (investigar el QR del CFE de la DGI;
    si no alcanza, foto + extracción con IA), comparar con la compra anterior.
 6. Calidad: guardar el reporte de cada carga en una tabla. Servidor propio cuando se pueda

@@ -1,9 +1,10 @@
-import { ArrowDown, ArrowUp, CaretDown, Receipt, Trash, UserCircle } from "@phosphor-icons/react";
+import { ArrowDown, ArrowUp, CaretDown, Receipt, Trash } from "@phosphor-icons/react";
 import { useState } from "react";
 
 import { anterior, cambiosDePrecio, type Compra, diferencia, ordenar } from "../lib/compras";
 import { formatoPlata } from "../lib/formato";
 import { useCompras } from "../store/compras";
+import { Cuenta } from "./Cuenta";
 
 const porcentaje = (n: number) => `${Math.abs(Math.round(n * 100)).toLocaleString("es-UY")} %`;
 const fechaCorta = (iso: string) => iso.split("-").reverse().join("/");
@@ -125,20 +126,6 @@ function FilaCompra({ compra, compras }: { compra: Compra; compras: Compra[] }) 
   );
 }
 
-/** Aviso de que el historial vive en el teléfono y de que, con cuenta, va a viajar con el usuario. */
-export function AvisoCuenta() {
-  return (
-    <p className="flex gap-2 text-[13px] leading-snug text-tinta-suave">
-      <UserCircle size={18} className="mt-px shrink-0 text-acento" aria-hidden />
-      <span>
-        Sin cuenta, tus compras quedan guardadas solo en este teléfono. Muy pronto vas a poder{" "}
-        <strong className="font-medium text-tinta">iniciar sesión</strong> (no es obligatorio) para tener tu historial
-        en cualquier dispositivo y no perderlo.
-      </span>
-    </p>
-  );
-}
-
 export function MisCompras() {
   const compras = useCompras((s) => s.compras);
   if (compras.length === 0) return null;
@@ -158,7 +145,7 @@ export function MisCompras() {
           <FilaCompra key={c.id} compra={c} compras={compras} />
         ))}
       </ul>
-      <AvisoCuenta />
+      <Cuenta />
     </section>
   );
 }

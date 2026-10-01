@@ -92,3 +92,18 @@ export function comercioSugerido(compras: Compra[], ruc: string | null): Comerci
   if (!ruc) return null;
   return ordenar(compras).find((c) => c.ruc === ruc && c.comercio)?.comercio ?? null;
 }
+
+/**
+ * Junta las compras del teléfono con las de la cuenta, sin repetir tickets. Si un ticket
+ * está en los dos lados, vale el de la cuenta.
+ */
+export function combinar(locales: Compra[], deLaCuenta: Compra[]): Compra[] {
+  const enCuenta = new Set(deLaCuenta.map((c) => c.id));
+  return [...deLaCuenta, ...locales.filter((c) => !enCuenta.has(c.id))];
+}
+
+/** Las compras del teléfono que todavía no están en la cuenta (hay que subirlas). */
+export function faltanEnLaCuenta(locales: Compra[], deLaCuenta: Compra[]): Compra[] {
+  const enCuenta = new Set(deLaCuenta.map((c) => c.id));
+  return locales.filter((c) => !enCuenta.has(c.id));
+}
