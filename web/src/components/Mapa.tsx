@@ -7,7 +7,7 @@ import {
   NavigationControl,
   setWorkerUrl,
 } from "maplibre-gl";
-import urlWorker from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
+import urlWorker from "maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url";
 import { useEffect, useRef, useState } from "react";
 
 import type { FeatureCollection, Polygon } from "geojson";
@@ -16,9 +16,12 @@ import type { Comercio, ResultadoComercio } from "../lib/api";
 import { formatoPlata } from "../lib/formato";
 import { temaActual } from "../lib/tema";
 import { circulo, limitesCirculo } from "../lib/geo";
+import { rutaPublica } from "../lib/rutas";
 
 // MapLibre dibuja en un proceso aparte (worker). Vite reempaqueta la librería y rompe la ruta
-// relativa a ese archivo, así que se la indicamos explícitamente.
+// relativa a ese archivo, así que se la indicamos explícitamente. "?worker&url" arma el
+// worker junto con lo que importa (maplibre-gl-shared.mjs); con "?url" solo, la versión
+// compilada copiaba el archivo suelto y el mapa no cargaba.
 setWorkerUrl(urlWorker);
 
 // Estilos gratuitos y sin clave de OpenFreeMap (datos de OpenStreetMap)
@@ -42,7 +45,7 @@ const MAX_ETIQUETAS = 15; // con más, el mapa se vuelve ilegible
 // licencia ODbL), guardados en web/public/geo. El contorno sirve para dos cosas: armar una
 // "máscara" (el mundo entero con un agujero con la forma de Uruguay) que oscurece lo de
 // afuera, y mostrar solo los nombres de lugares que están dentro del país.
-const PAIS = fetch("/geo/uruguay.geojson")
+const PAIS = fetch(rutaPublica("geo/uruguay.geojson"))
   .then((r) => r.json())
   .then((fc: FeatureCollection<Polygon>) => fc.features[0].geometry);
 
@@ -122,8 +125,8 @@ function prepararEstilo(mapa: MapaML) {
     MASCARA.then((m) => mapa.getSource<GeoJSONSource>("mascara")?.setData(m));
   }
   if (!mapa.getSource("departamentos")) {
-    mapa.addSource("departamentos", { type: "geojson", data: "/geo/departamentos.geojson" });
-    mapa.addSource("uruguay", { type: "geojson", data: "/geo/uruguay.geojson" });
+    mapa.addSource("departamentos", { type: "geojson", data: rutaPublica("geo/departamentos.geojson") });
+    mapa.addSource("uruguay", { type: "geojson", data: rutaPublica("geo/uruguay.geojson") });
     // El departamento elegido se tiñe; el filtro se actualiza desde el componente
     mapa.addLayer({
       id: "departamento-elegido",

@@ -84,7 +84,7 @@ FROM core.producto_canonico pc;
 --
 -- Devuelve un comercio por fila, ordenados primero por cobertura (los que tienen toda la
 -- canasta) y después por total. "detalle" dice qué comprar en cada comercio.
-CREATE FUNCTION mart.cotizar_canasta(
+CREATE OR REPLACE FUNCTION mart.cotizar_canasta(
     canasta     jsonb,
     lat         double precision,
     lon         double precision,
@@ -126,6 +126,7 @@ opciones AS (
            pe.producto_canonico_id,
            g.nombre AS generico,
            pe.cantidad,
+           pg.producto_fuente_id,
            pg.producto,
            pg.precio,
            pg.fecha,
@@ -138,12 +139,13 @@ opciones AS (
     JOIN mart.precio_generico pg
       ON pg.establecimiento_id = c.id AND pg.producto_canonico_id = pe.producto_canonico_id
 ),
--- La opción más barata de cada ítem en cada comercio
+-- La opción más barata de cada ítem en cada comercio. Si dos cuestan lo mismo, gana la de
+-- menor id: así el resultado es siempre el mismo (y coincide con web/src/lib/cotizar.ts)
 mejor AS (
     SELECT DISTINCT ON (establecimiento_id, producto_canonico_id)
            *, round(unidades * precio, 2) AS costo
     FROM opciones
-    ORDER BY establecimiento_id, producto_canonico_id, unidades * precio
+    ORDER BY establecimiento_id, producto_canonico_id, unidades * precio, producto_fuente_id
 ),
 por_comercio AS (
     SELECT m.establecimiento_id,

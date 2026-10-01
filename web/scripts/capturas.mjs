@@ -23,7 +23,11 @@ const LISTAS = {
 
 async function guardarListas(pagina) {
   await pagina.evaluate(async (listas) => {
-    const genericos = await (await fetch("/api/genericos")).json();
+    // Con API (desarrollo) o, en la web estática, desde los archivos exportados
+    const conApi = await fetch("/api/genericos").catch(() => null);
+    const genericos = conApi?.ok
+      ? await conApi.json()
+      : (await (await fetch("datos/base.json")).json()).genericos;
     const id = Object.fromEntries(genericos.map((g) => [g.nombre, g.producto_canonico_id]));
     const guardadas = Object.entries(listas).map(([nombre, productos]) => ({
       nombre,

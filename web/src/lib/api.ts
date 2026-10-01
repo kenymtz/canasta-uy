@@ -1,4 +1,9 @@
 // Tipos y llamadas a la API (api/main.py). Los tipos copian los modelos de Pydantic.
+//
+// Con VITE_MODO=estatico (la versión publicada en GitHub Pages) no hay API: las mismas
+// llamadas leen archivos y calculan en el navegador (ver estatico.ts).
+
+import { apiEstatica } from "./estatico";
 
 export type Unidad = "kg" | "l" | "unidad" | "m";
 
@@ -78,7 +83,7 @@ async function pedir<T>(ruta: string, opciones?: RequestInit): Promise<T> {
   return respuesta.json() as Promise<T>;
 }
 
-export const api = {
+const apiServidor = {
   salud: () => pedir<{ estado: string; ultimo_precio: string }>("/salud"),
   ciudades: () => pedir<Ciudad[]>("/ciudades"),
   genericos: () => pedir<Generico[]>("/genericos"),
@@ -92,3 +97,5 @@ export const api = {
       signal,
     }),
 };
+
+export const api = import.meta.env.VITE_MODO === "estatico" ? apiEstatica : apiServidor;

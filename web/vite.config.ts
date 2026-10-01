@@ -4,8 +4,12 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  // En GitHub Pages la web vive en /canasta-uy/ (lo define el workflow de publicación)
+  base: process.env.VITE_BASE ?? "/",
   // El único archivo grande es el del mapa (MapLibre, ~1 MB), y se carga aparte
   build: { chunkSizeWarningLimit: 1100 },
+  // El worker del mapa usa import (es un módulo), así que se arma en ese formato
+  worker: { format: "es" },
   server: {
     host: true,
     port: 5173,
