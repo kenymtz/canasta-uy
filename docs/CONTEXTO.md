@@ -387,6 +387,9 @@ Para el objetivo actual (web de compras al menor costo en Uruguay):
    (`PREPARACION` en `lectorBoleta.ts`). Boleta real por WhatsApp: de 0 % a 67 % de precios
    exactos leyendo el recorte. Pendiente: más boletas reales comprimidas de distintos
    comercios; las falsas siguen siendo más fáciles que las reales.
+   Boleta inventada por Augusto (formato Macromercado, impresión nítida; **solo para pruebas,
+   no cargar en ninguna base**): 100 % original, por WhatsApp y en capturas; 29 % muy dañada.
+   Conclusión: lo que más pesa es la calidad de la impresión, no si la foto vino por WhatsApp.
 5. **Usuarios y tickets:** cuentas, subir el ticket (investigar el QR del CFE de la DGI;
    si no alcanza, foto + extracción con IA), comparar con la compra anterior.
 6. Calidad: guardar el reporte de cada carga en una tabla. Servidor propio cuando se pueda

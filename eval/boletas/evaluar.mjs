@@ -87,7 +87,7 @@ await pagina.goto(WEB, { waitUntil: "networkidle" });
 
 async function leer(archivo, recorte) {
   const datos = readFileSync(archivo).toString("base64");
-  const tipo = archivo.endsWith(".png") ? "image/png" : "image/jpeg";
+  const tipo = archivo.endsWith(".png") ? "image/png" : archivo.endsWith(".webp") ? "image/webp" : "image/jpeg";
   return pagina.evaluate(
     async ({ datos, tipo, recorte, preparacion }) => {
       const { leerTexto } = await import("/src/lib/lectorBoleta.ts");
@@ -107,9 +107,9 @@ async function leer(archivo, recorte) {
 const resultados = [];
 for (const carpeta of CARPETAS) {
   if (!existsSync(carpeta)) continue;
-  const imagenes = readdirSync(carpeta).filter((f) => /\.(jpe?g|png)$/i.test(f)).sort();
+  const imagenes = readdirSync(carpeta).filter((f) => /\.(jpe?g|png|webp)$/i.test(f)).sort();
   for (const imagen of imagenes) {
-    const respuesta = join(carpeta, imagen.replace(/\.(jpe?g|png)$/i, ".json"));
+    const respuesta = join(carpeta, imagen.replace(/\.(jpe?g|png|webp)$/i, ".json"));
     if (!existsSync(respuesta)) {
       console.log(`  (sin ${basename(respuesta)}: se saltea ${imagen})`);
       continue;
@@ -124,7 +124,7 @@ for (const carpeta of CARPETAS) {
       const nota = puntuar(esperado.productos, lectura.productos, esperado.sensibles ?? []);
       resultados.push({
         imagen: join(carpeta, imagen),
-        formato: esperado.formato ?? `real:${imagen.replace(/\.(jpe?g|png)$/i, "")}`,
+        formato: esperado.formato ?? `real:${imagen.replace(/\.(jpe?g|png|webp)$/i, "")}`,
         degradacion: esperado.degradacion ?? "original",
         forma,
         segundos: Math.round((Date.now() - inicio) / 100) / 10,

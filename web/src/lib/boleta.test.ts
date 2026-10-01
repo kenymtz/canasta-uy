@@ -157,3 +157,9 @@ describe("leerBoleta y el código de artículo mal leído", () => {
     expect(leerBoleta("%575 FIAMBRERIA DULCE 127,60").productos[0].descripcion).toBe("FIAMBRERIA DULCE");
   });
 });
+
+describe("leerBoleta y el recuadro de impuestos escrito de otras formas", () => {
+  it("descarta T.BImp., T.MImp. y T.Expa. aunque falten los puntos", () => {
+    expect(leerBoleta("T.Expa.: 0.00\nT.MImp.: 12.00\nT.BImp.: 44.63\nT.Bimp.: 44.63").productos).toEqual([]);
+  });
+});

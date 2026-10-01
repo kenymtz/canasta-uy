@@ -16,6 +16,12 @@ const entre = (a, b) => a + azar() * (b - a);
 
 // Cuánto se puede alejar cada versión de la original, según el nivel
 const NIVELES = {
+  // Como queda al mandarla por WhatsApp: lado mayor de 1600 px y JPG comprimido, sin más daño
+  whatsapp: { giro: 0, escala: "whatsapp", luz: [1, 1], desenfoque: 0, ruido: 3, sombra: 0, calidad: 0.7 },
+  // Una captura de la foto en la galería del celular, mandada por WhatsApp: la foto ocupa el
+  // ancho de la pantalla (1080 px) y la captura (2400 px de alto) se achica a 1600 px.
+  // Queda más chica y comprimida dos veces
+  captura: { giro: 0, escala: "captura", luz: [0.97, 1.03], desenfoque: 0.3, ruido: 4, sombra: 0, calidad: 0.65 },
   leve: { giro: 1.5, escala: [0.9, 1.3], luz: [0.9, 1.1], desenfoque: 0.4, ruido: 6, sombra: 0.1, calidad: 0.85 },
   media: { giro: 3, escala: [0.75, 1.1], luz: [0.75, 1.15], desenfoque: 0.8, ruido: 12, sombra: 0.25, calidad: 0.72 },
   fuerte: { giro: 5, escala: [0.6, 0.9], luz: [0.6, 1.2], desenfoque: 1.3, ruido: 20, sombra: 0.4, calidad: 0.6 },
@@ -30,11 +36,12 @@ mkdirSync("variantes", { recursive: true });
 
 const nav = await chromium.launch();
 const pagina = await nav.newPage();
-const fotos = readdirSync("reales").filter((f) => /\.(jpe?g|png)$/i.test(f));
+const fotos = readdirSync("reales").filter((f) => /\.(jpe?g|png|webp)$/i.test(f));
 let total = 0;
 
 for (const foto of fotos) {
-  const base = foto.replace(/\.(jpe?g|png)$/i, "");
+  const base = foto.replace(/\.(jpe?g|png|webp)$/i, "");
+  const tipo = foto.endsWith(".png") ? "image/png" : foto.endsWith(".webp") ? "image/webp" : "image/jpeg";
   if (!existsSync(`reales/${base}.json`)) continue;
   const respuesta = JSON.parse(readFileSync(`reales/${base}.json`, "utf-8"));
   const datos = readFileSync(`reales/${foto}`).toString("base64");
@@ -45,7 +52,7 @@ for (const foto of fotos) {
     const n = NIVELES[nivel];
     const ajustes = {
       giro: entre(-n.giro, n.giro),
-      escala: entre(...n.escala),
+      escala: Array.isArray(n.escala) ? entre(...n.escala) : n.escala,
       luz: entre(...n.luz),
       desenfoque: entre(0, n.desenfoque),
       ruido: n.ruido,
@@ -54,10 +61,14 @@ for (const foto of fotos) {
       fase: entre(0, 6.28),
     };
     const { jpg, recorte } = await pagina.evaluate(
-      async ({ datos, a, r }) => {
+      async ({ datos, tipo, a, r }) => {
         const img = new Image();
-        img.src = "data:image/jpeg;base64," + datos;
+        img.src = `data:${tipo};base64,${datos}`;
         await img.decode();
+        const ladoMayor = Math.max(img.naturalWidth, img.naturalHeight);
+        if (a.escala === "whatsapp") a.escala = Math.min(1, 1600 / ladoMayor);
+        // Captura: la foto ocupa 1080 px de ancho en pantalla y después todo se achica 1600/2400
+        if (a.escala === "captura") a.escala = (1080 / img.naturalWidth) * (1600 / 2400);
         const W = Math.round(img.naturalWidth * a.escala);
         const H = Math.round(img.naturalHeight * a.escala);
         const c = document.createElement("canvas");
@@ -109,7 +120,7 @@ for (const foto of fotos) {
           recorte: { x, y, ancho: Math.min(W - x, Math.max(...xs) - x + 6), alto: Math.min(H - y, Math.max(...ys) - y + 6) },
         };
       },
-      { datos, a: ajustes, r: respuesta.recorte },
+      { datos, tipo, a: ajustes, r: respuesta.recorte },
     );
     const nombre = `variantes/${base}-${String(v + 1).padStart(2, "0")}`;
     writeFileSync(`${nombre}.jpg`, Buffer.from(jpg, "base64"));

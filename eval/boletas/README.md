@@ -98,6 +98,20 @@ el recorte y porcentaje de niveles automáticos; ver `web/src/lib/lectorBoleta.t
 | whatsapp (renglones de ~20 px, JPG) | 81 % | 82 % |
 | **boleta real de Macromercado** (por WhatsApp, 900 px) | 0 % → 33 % | **67 %** |
 
+Boleta **inventada** con formato de Macromercado (impresión nítida, 939 px de ancho; solo
+para probar, no es un dato real), con 3 versiones de cada forma de llegar:
+
+| Cómo llega | Precio exacto (recorte) | Precio exacto (foto entera) |
+|---|---|---|
+| archivo original | 100 % | 100 % |
+| por WhatsApp (1600 px, JPG) | 100 % | 100 % |
+| captura de la galería, por WhatsApp | 95 % | 100 % |
+| leve / media | 100 % | 100 % |
+| fuerte | 29 % | 29 % |
+
+La diferencia con la boleta real no es "archivo o WhatsApp" sino **la impresión**: con tinta
+negra y nítida aguanta WhatsApp y capturas; con tinta térmica gris y gastada, no tanto.
+
 Cómo se llegó ahí, paso a paso, con este banco:
 
 1. Espacio después de la coma, signo al final del monto y productos en dos renglones: de
@@ -106,6 +120,8 @@ Cómo se llegó ahí, paso a paso, con este banco:
    cuando falta su columna: la boleta real pasa de 0 % a 33 %.
 3. Niveles automáticos (la tinta gris del papel térmico pasa a negro) y menos ampliación: la
    boleta real llega a 67 %.
+4. El recuadro de impuestos escrito sin puntos ("T.BImp.:", "T.Expa.:"): sin basura al leer la
+   foto entera.
 
 Lo que sigue flojo:
 

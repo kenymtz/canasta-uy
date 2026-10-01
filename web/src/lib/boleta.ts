@@ -29,8 +29,8 @@ const SENSIBLE = new RegExp(
 const EMAIL = /\S+@\S+/;
 const TARJETA_TAPADA = /[*xX•]{2,}\s?\d{2,4}/;
 // Totales, impuestos y demás líneas con monto que no son productos. Incluye el recuadro de
-// impuestos de algunos comercios: "T.M.Imp.: 82,17", "IVA T.B.: 23,01"
-const NO_ES_PRODUCTO = /(sub\s?total|total|\biva\b|\bimp\b|imponible|\bneto\b|gravad|exent|\bt\.\s?[ebm]\.|redondeo|descuento|\bdto\b|bonif|cambio|efectivo|vuelto|\bpago\b|saldo|e-?ticket|factura|serie|fecha|hora)/i;
+// impuestos de algunos comercios: "T.M.Imp.: 82,17", "T.BImp.: 44,63", "T.Expa.: 0,00", "IVA T.B.: 23,01"
+const NO_ES_PRODUCTO = /(sub\s?total|total|\biva\b|\bimp\b|imponible|\bneto\b|gravad|exent|\bt\.\s?[ebm]\.|\bt\.\s?(?:[ebm]\.?\s?imp|exp)|redondeo|descuento|\bdto\b|bonif|cambio|efectivo|vuelto|\bpago\b|saldo|e-?ticket|factura|serie|fecha|hora)/i;
 // Títulos de las columnas: no son productos aunque tengan letras
 const CABECERA = /(descripci|producto|importe|cantidad|\bcant\b|precio|monto)/i;
 // El monto al final de la línea. Algunos comercios le pegan la letra de la tasa de IVA
