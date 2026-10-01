@@ -404,7 +404,9 @@ de mostrarla (contacto en privacidad: **uycanasta@gmail.com**; datos para la URC
 trae; investigar el Mercado Modelo), 4) cosas chicas (en qué cuenta de Cloudflare quedó el
 proyecto `canastauy`; URL del SIPC 2027 cuando salga).
 Hecho el 01/10/2026: contacto en privacidad, `docs/URCDP.md`, README con capturas nuevas. Falta
-de Augusto: activar la verificación en dos pasos (Supabase, Google, GitHub, Cloudflare).
+de Augusto: nada. Verificación en dos pasos activada el 01/10/2026 en Supabase, Cloudflare,
+GitHub y Google (cuenta personal y uycanasta@gmail.com); la cuenta de Cloudflare, creada con
+Google, ahora también tiene contraseña propia.
 **URCDP: trámite enviado el 01/10/2026** (Registro de Base de Datos, persona física, "Canasta
 UY: cuentas e historial de compras"), estado "Pendiente de Revisión"; las respuestas quedaron
 en `docs/URCDP.md`. Sin encargado cargado en 4.2 (el formulario pide RUT y representante, que

@@ -128,8 +128,9 @@ No es una base comercial ni crediticia: 0 en todos los casilleros.
   solo en Supabase y en los secretos del repositorio.
 - Toda la comunicación es por HTTPS.
 - El navegador borra los datos de pago y personales de la boleta antes de guardar.
-- Acceso al panel de la base: solo el responsable. **Pendiente:** activar la verificación en
-  dos pasos en las cuentas de Supabase, Google, GitHub y Cloudflare.
+- Acceso al panel de la base: solo el responsable. Verificación en dos pasos activada en
+  Supabase, Google, GitHub y Cloudflare (01/10/2026, después de enviar la inscripción: se puede
+  agregar al actualizar el registro).
 
 ## Paso 11. Descripción técnica
 
