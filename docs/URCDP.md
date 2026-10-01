@@ -108,7 +108,10 @@ No es una base comercial ni crediticia: 0 en todos los casilleros.
 - **Comunicaciones o cesiones:** ninguna.
 - **Transferencias internacionales:** sí. País adecuado: **Unión Europea** (los datos se guardan
   en Frankfurt, Alemania). País no adecuado: **Singapur**, sede del proveedor (Supabase Pte.
-  Ltd.), con cláusulas contractuales tipo en su [acuerdo de tratamiento de datos](https://supabase.com/legal/dpa). Confirmar en el formulario que la UE figura entre los destinos con nivel de protección
+  Ltd.), con cláusulas contractuales tipo en su [acuerdo de tratamiento de datos](https://supabase.com/legal/dpa).
+  Motivo: con consentimiento del titular (la página de privacidad lo explica y se acepta al
+  iniciar sesión) y otros motivos (prestación del servicio de alojamiento, con cláusulas
+  contractuales tipo). Confirmar en el formulario que la UE figura entre los destinos con nivel de protección
   adecuado reconocidos por la URCDP.
 - **Información al titular:** la página de privacidad lo explica, y al iniciar sesión se avisa
   que entrar implica aceptarla.
