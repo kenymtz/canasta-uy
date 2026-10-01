@@ -404,8 +404,12 @@ de mostrarla (contacto en privacidad: **uycanasta@gmail.com**; datos para la URC
 trae; investigar el Mercado Modelo), 4) cosas chicas (en qué cuenta de Cloudflare quedó el
 proyecto `canastauy`; URL del SIPC 2027 cuando salga).
 Hecho el 01/10/2026: contacto en privacidad, `docs/URCDP.md`, README con capturas nuevas. Falta
-de Augusto: presentar el trámite de la URCDP y activar la verificación en dos pasos (Supabase,
-Google, GitHub, Cloudflare). Frutas y verduras: la fuente es la UAM (ver `docs/FUENTES.md`);
+de Augusto: activar la verificación en dos pasos (Supabase, Google, GitHub, Cloudflare).
+**URCDP: trámite enviado el 01/10/2026** (Registro de Base de Datos, persona física, "Canasta
+UY: cuentas e historial de compras"), estado "Pendiente de Revisión"; las respuestas quedaron
+en `docs/URCDP.md`. Sin encargado cargado en 4.2 (el formulario pide RUT y representante, que
+Supabase no tiene en Uruguay); declarado como ubicación de un tercero y transferencia a la UE y
+a Singapur. Si la URCDP pide aclaración, llega a uycanasta@gmail.com. Frutas y verduras: la fuente es la UAM (ver `docs/FUENTES.md`);
 **en espera de que la UAM responda** si se pueden reutilizar sus precios (Augusto mandó
 el mail desde uycanasta@gmail.com el 01/10/2026). SIPC de un año
 nuevo: la actualización mensual lo detecta sola (`pipelines/fuentes/sipc_anio_nuevo.py`) y

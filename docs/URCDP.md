@@ -1,5 +1,7 @@
 # Inscripción de la base de datos en la URCDP
 
+> **Estado:** enviada el 01/10/2026, "Pendiente de Revisión". Lo de abajo es lo que se declaró.
+
 La Ley 18.331 pide inscribir en la Unidad Reguladora y de Control de Datos Personales (URCDP)
 toda base con datos de personas que no sea de uso personal o doméstico. Canasta UY guarda las
 cuentas y el historial de compras de sus usuarios (Supabase), así que corresponde inscribirla

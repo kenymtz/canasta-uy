@@ -172,7 +172,7 @@ docker compose logs jupyter
 - [x] Mis compras: el ticket (QR del CFE y boleta leída en el teléfono) registra qué, cuánto y dónde, y se compara con la compra anterior
 - [x] Cuentas de usuario opcionales (Supabase, inicio con Google, Row Level Security) y página de privacidad
 - [x] Lector de boletas medido con un banco de pruebas en Docker ([`eval/boletas`](eval/boletas/README.md))
-- [ ] Inscripción de la base en la URCDP (datos listos en [`docs/URCDP.md`](docs/URCDP.md))
+- [ ] Inscripción de la base en la URCDP: enviada el 01/10/2026, pendiente de revisión ([`docs/URCDP.md`](docs/URCDP.md))
 - [ ] Precios de frutas y verduras (el SIPC no los trae)
 - [ ] A futuro: que el ticket compare con lo que costaba la misma compra en otros comercios y, con controles, que actualice los precios de cada comercio. Por ahora las boletas sirven solo para el historial
 - [ ] Controles de calidad guardados por carga
