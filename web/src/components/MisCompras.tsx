@@ -21,13 +21,16 @@ function Diferencia({ compra, previa }: { compra: Compra; previa: Compra }) {
   const mas = monto > 0;
   const Flecha = mas ? ArrowUp : ArrowDown;
   return (
-    <span className={`inline-flex items-center gap-0.5 font-medium ${mas ? "text-alerta" : "text-acento"}`}>
-      <Flecha size={13} weight="bold" aria-hidden />
-      <span className="sr-only">{mas ? "Gastaste más:" : "Gastaste menos:"}</span>
-      <span className="numeros">
-        {formatoPlata(Math.abs(monto))} ({porcentaje(cambio)})
-      </span>
-      <span className="font-normal text-tinta-suave">&nbsp;vs. la anterior</span>
+    <span className={`font-medium ${mas ? "text-alerta" : "text-acento"}`}>
+      {/* El monto y el porcentaje no se separan; "vs. la anterior" puede bajar entero */}
+      <span className="inline-flex items-center gap-0.5 whitespace-nowrap">
+        <Flecha size={13} weight="bold" aria-hidden />
+        <span className="sr-only">{mas ? "Gastaste más:" : "Gastaste menos:"}</span>
+        <span className="numeros">
+          {formatoPlata(Math.abs(monto))} ({porcentaje(cambio)})
+        </span>
+      </span>{" "}
+      <span className="font-normal whitespace-nowrap text-tinta-suave">vs. la anterior</span>
     </span>
   );
 }

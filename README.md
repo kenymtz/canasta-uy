@@ -2,8 +2,8 @@
 
 **Compras al menor costo en Uruguay.** Una web donde ponés tu presupuesto, elegís tu
 ciudad en un mapa y armás tu canasta con productos genéricos ("aceite de girasol",
-"arroz"). Te muestra en qué comercios te conviene comprarla. Después podés subir tu
-ticket y ver cómo te fue comparado con tu compra anterior.
+"arroz"). Te muestra en qué comercios te conviene comprarla. Después podés guardar tu
+ticket en **Mis compras** y ver cómo te fue comparado con tu compra anterior.
 
 Construida sobre los **datos abiertos oficiales del SIPC** (Sistema de Información de
 Precios al Consumidor): 40 millones de precios de 2025 y 2026 en casi 900 comercios de todo el país.
@@ -15,9 +15,22 @@ Precios al Consumidor): 40 millones de precios de 2025 y 2026 en casi 900 comerc
 ![Canasta UY en la computadora: mapa de Salto con los totales de cada comercio y el panel para armar la canasta](docs/img/web-escritorio.png)
 
 <p align="center">
-  <img src="docs/img/web-celular.png" width="300" alt="Canasta UY en el celular, modo oscuro">
-  <img src="docs/img/web-ticket.png" width="300" alt="Ticket del comercio que más conviene, con cada producto, cuánto comprar y el total">
+  <img src="docs/img/web-celular.png" width="260" alt="Canasta UY en el celular, modo oscuro">
+  <img src="docs/img/web-ticket.png" width="260" alt="Ticket del comercio que más conviene, con cada producto, cuánto comprar y el total">
+  <img src="docs/img/web-compras.png" width="260" alt="Mis compras: dos compras guardadas, cuánto más se gastó que la anterior y qué productos subieron de precio">
 </p>
+
+## Qué podés hacer
+
+- **Armar tu canasta** con productos genéricos y ver, en el mapa, en qué comercios cercanos
+  te sale más barata, con lo que falta en cada uno. Guardarla en **Mis listas** para la
+  próxima vez.
+- **Guardar tus compras** a partir del ticket: el QR de la DGI dice dónde, cuándo y cuánto;
+  la foto de la boleta, qué compraste (se lee en el teléfono, borrando antes los datos de
+  pago y personales, y se revisa antes de guardar). **Mis compras** compara cada compra con
+  la anterior y muestra qué productos subieron.
+- **Cuenta opcional** (inicio con Google) para tener el historial en cualquier dispositivo.
+  Sin cuenta, todo queda en tu teléfono. Ver la [política de privacidad](https://canastauy.pages.dev/privacidad).
 
 ## Qué resuelve
 
@@ -157,7 +170,11 @@ docker compose logs jupyter
 - [x] API (FastAPI) con validación, conexión de solo lectura y tests
 - [x] Web con mapa interactivo (MapLibre + OpenFreeMap), resultados en forma de ticket y listas guardadas
 - [x] Mis compras: el ticket (QR del CFE y boleta leída en el teléfono) registra qué, cuánto y dónde, y se compara con la compra anterior
-- [ ] Cuentas de usuario opcionales (Supabase) para tener el historial en cualquier dispositivo
+- [x] Cuentas de usuario opcionales (Supabase, inicio con Google, Row Level Security) y página de privacidad
+- [x] Lector de boletas medido con un banco de pruebas en Docker ([`eval/boletas`](eval/boletas/README.md))
+- [ ] Inscripción de la base en la URCDP (datos listos en [`docs/URCDP.md`](docs/URCDP.md))
+- [ ] Precios de frutas y verduras (el SIPC no los trae)
+- [ ] A futuro: que el ticket compare con lo que costaba la misma compra en otros comercios y, con controles, que actualice los precios de cada comercio. Por ahora las boletas sirven solo para el historial
 - [ ] Controles de calidad guardados por carga
 - [x] Despliegue público gratis: web estática en Cloudflare Pages, actualizada sola cada mes
 

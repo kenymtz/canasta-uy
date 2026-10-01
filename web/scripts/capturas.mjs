@@ -83,5 +83,41 @@ for (const pantalla of PANTALLAS) {
   }
 }
 
+// "Mis compras" con dos compras inventadas (no son tickets reales)
+{
+  const contexto = await navegador.newContext({
+    viewport: { width: 390, height: 844 },
+    deviceScaleFactor: 2,
+    isMobile: true,
+    colorScheme: "light",
+    reducedMotion: "reduce",
+    locale: "es-UY",
+  });
+  const pagina = await contexto.newPage();
+  await pagina.goto(url, { waitUntil: "networkidle" });
+  await pagina.evaluate(() => {
+    const comercio = { establecimiento_id: 1, nombre: "Ta - Ta - Hiper Salto", direccion: "19 de Abril y Soca", ciudad: "Salto" };
+    const producto = (descripcion, precio) => ({ descripcion, precio });
+    const compras = [
+      {
+        id: "ejemplo-1", fecha: "2026-09-02", total: 1012.4, ruc: "219999990019", comercio, guardada: "2026-09-02T18:00:00Z",
+        productos: [producto("ACEITE GIRASOL 900CC", 79), producto("ARROZ BLANCO 1KG", 51), producto("YERBA MATE 1KG", 186), producto("LECHE ENTERA 1L", 42.5)],
+      },
+      {
+        id: "ejemplo-2", fecha: "2026-09-30", total: 1087.9, ruc: "219999990019", comercio, guardada: "2026-09-30T18:00:00Z",
+        productos: [producto("ACEITE GIRASOL 900CC", 94), producto("ARROZ BLANCO 1KG", 51), producto("YERBA MATE 1KG", 179), producto("LECHE ENTERA 1L", 44.9)],
+      },
+    ];
+    localStorage.setItem("canasta-uy-compras", JSON.stringify({ state: { compras }, version: 1 }));
+  });
+  await pagina.reload({ waitUntil: "networkidle" });
+  const mis = pagina.getByRole("region", { name: "Mis compras" });
+  await mis.getByRole("button").first().click(); // abre la compra más nueva
+  await pagina.waitForTimeout(300);
+  await mis.screenshot({ path: `${salida}/celular-claro-compras.png` });
+  console.log("captura:", `${salida}/celular-claro-compras.png`);
+  await contexto.close();
+}
+
 await navegador.close();
 console.log(errores.length ? `errores de consola:\n${errores.join("\n")}` : "consola sin errores");

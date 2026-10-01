@@ -395,6 +395,15 @@ Para el objetivo actual (web de compras al menor costo en Uruguay):
    números del nombre ("1506" = 150G mal leído) y **dos lecturas** (normal y con el fondo
    aplanado; se queda la que tiene más productos, `PASADAS`). Limpias: 100 % original, ~90-97 %
    con versiones WhatsApp y captura. Gastadas: de 9 % a 21-26 %. Boletas falsas: 58 % → 65 %.
+**Decisión de Augusto (01/10/2026): las boletas sirven solo para el historial.** Queda para
+el futuro: unir cada producto del ticket con su genérico (para decir "esta compra en otro
+comercio salía $ X") y la parte C (que los tickets actualicen los precios de cada comercio,
+con controles contra datos falsos). Orden acordado para seguir: 1) cerrar lo pendiente antes
+de mostrarla (contacto en privacidad: **uycanasta@gmail.com**; datos para la URCDP en
+`docs/URCDP.md`; README y capturas al día), 3) precios de frutas y verduras (el SIPC no los
+trae; investigar el Mercado Modelo), 4) cosas chicas (en qué cuenta de Cloudflare quedó el
+proyecto `canastauy`; URL del SIPC 2027 cuando salga).
+
 5. **Usuarios y tickets:** cuentas, subir el ticket (investigar el QR del CFE de la DGI;
    si no alcanza, foto + extracción con IA), comparar con la compra anterior.
 6. Calidad: guardar el reporte de cada carga en una tabla. Servidor propio cuando se pueda
