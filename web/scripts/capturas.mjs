@@ -28,14 +28,14 @@ async function guardarListas(pagina) {
     const genericos = conApi?.ok
       ? await conApi.json()
       : (await (await fetch("datos/base.json")).json()).genericos;
-    const id = Object.fromEntries(genericos.map((g) => [g.nombre, g.producto_canonico_id]));
+    const nombres = new Set(genericos.map((g) => g.nombre));
     const guardadas = Object.entries(listas).map(([nombre, productos]) => ({
       nombre,
-      items: Object.fromEntries(productos.filter(([n]) => id[n]).map(([n, c]) => [id[n], c])),
+      items: Object.fromEntries(productos.filter(([n]) => nombres.has(n))),
       guardada: new Date().toISOString(),
     }));
     const estado = { ubicacion: null, radioKm: 5, items: {}, presupuesto: null, listas: guardadas };
-    localStorage.setItem("canasta-uy", JSON.stringify({ state: estado, version: 1 }));
+    localStorage.setItem("canasta-uy", JSON.stringify({ state: estado, version: 2 }));
   }, LISTAS);
 }
 

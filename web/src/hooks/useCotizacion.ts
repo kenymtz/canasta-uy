@@ -1,15 +1,17 @@
 import { useEffect, useState } from "react";
 
-import { api, type ResultadoComercio } from "../lib/api";
-import type { Ubicacion } from "../store/canasta";
+import { api, type Generico, type ResultadoComercio } from "../lib/api";
+import type { Items, Ubicacion } from "../store/canasta";
 
 export type Fase = "inactivo" | "cargando" | "listo" | "error";
 
 interface Entrada {
   ubicacion: Ubicacion | null;
   radioKm: number;
-  items: Record<number, number>;
+  items: Items;
   presupuesto: number | null;
+  /** Para pasar de nombre a id: la API y cotizar.ts piden ids */
+  genericos: Map<string, Generico>;
 }
 
 interface Cotizacion {
@@ -22,14 +24,18 @@ interface Cotizacion {
 const DEMORA_MS = 400; // espera a que el usuario deje de tocar + y − antes de pedir
 
 /** Cotiza la canasta cada vez que cambia algo, sin pedir de más ni mostrar respuestas viejas. */
-export function useCotizacion({ ubicacion, radioKm, items, presupuesto }: Entrada): Cotizacion {
+export function useCotizacion({ ubicacion, radioKm, items, presupuesto, genericos }: Entrada): Cotizacion {
   const [fase, setFase] = useState<Fase>("inactivo");
   const [resultados, setResultados] = useState<ResultadoComercio[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [intento, setIntento] = useState(0);
 
   useEffect(() => {
-    const lista = Object.entries(items);
+    // Los productos que ya no tienen precios quedan afuera (la canasta avisa cuáles son)
+    const lista = Object.entries(items).flatMap(([nombre, cantidad]) => {
+      const g = genericos.get(nombre);
+      return g ? [{ producto_canonico_id: g.producto_canonico_id, cantidad }] : [];
+    });
     if (!ubicacion || lista.length === 0) {
       setFase("inactivo");
       setResultados([]);
@@ -43,7 +49,7 @@ export function useCotizacion({ ubicacion, radioKm, items, presupuesto }: Entrad
       api
         .cotizar(
           {
-            items: lista.map(([id, cantidad]) => ({ producto_canonico_id: Number(id), cantidad })),
+            items: lista,
             lat: ubicacion.lat,
             lon: ubicacion.lon,
             radio_km: radioKm,
@@ -66,7 +72,7 @@ export function useCotizacion({ ubicacion, radioKm, items, presupuesto }: Entrad
       clearTimeout(temporizador);
       control.abort();
     };
-  }, [ubicacion, radioKm, items, presupuesto, intento]);
+  }, [ubicacion, radioKm, items, presupuesto, genericos, intento]);
 
   return { fase, resultados, error, reintentar: () => setIntento((n) => n + 1) };
 }

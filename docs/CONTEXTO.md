@@ -317,6 +317,11 @@ Para el objetivo actual (web de compras al menor costo en Uruguay):
    `precios_2026.csv`, 1 GB) en un Postgres temporal, exporta y, si cambiaron los datos,
    hace un commit y publica. **Cuando salga el dataset del SIPC 2027 hay que agregar su URL
    en `RECURSOS`** (es otro dataset, con otro id).
+   La primera corrida automática mostró que **los ids de los genéricos cambian** cuando la base
+   se arma de cero. Por eso la canasta y Mis listas se guardan en el navegador **por nombre**
+   del genérico (versión 2 del store; `migrar` convierte lo guardado por id con la tabla fija
+   `web/src/store/nombresVersion1.ts`). Si un producto de una lista ya no tiene precios, la
+   canasta lo avisa ("Sin precios vigentes") y no lo cotiza.
 5. **Usuarios y tickets:** cuentas, subir el ticket (investigar el QR del CFE de la DGI;
    si no alcanza, foto + extracción con IA), comparar con la compra anterior.
 6. Calidad: guardar el reporte de cada carga en una tabla. Servidor propio cuando se pueda

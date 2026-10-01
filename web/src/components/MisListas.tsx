@@ -1,11 +1,11 @@
 import { BookmarkSimple, FloppyDisk, X } from "@phosphor-icons/react";
 import { type FormEvent, useState } from "react";
 
-import type { Lista } from "../store/canasta";
+import type { Items, Lista } from "../store/canasta";
 
 interface Props {
   listas: Lista[];
-  items: Record<number, number>;
+  items: Items;
   onGuardar: (nombre: string) => void;
   onCargar: (nombre: string) => void;
   onBorrar: (nombre: string) => void;
@@ -14,9 +14,9 @@ interface Props {
 const botonSecundario =
   "presionable inline-flex h-10 items-center gap-1.5 rounded-control border border-linea bg-ticket px-3 text-sm font-medium text-tinta hover:border-tinta-suave";
 
-function mismosItems(a: Record<number, number>, b: Record<number, number>) {
+function mismosItems(a: Items, b: Items) {
   const ka = Object.keys(a);
-  return ka.length === Object.keys(b).length && ka.every((k) => a[Number(k)] === b[Number(k)]);
+  return ka.length === Object.keys(b).length && ka.every((k) => a[k] === b[k]);
 }
 
 const productos = (n: number) => (n === 1 ? "1 producto" : `${n} productos`);

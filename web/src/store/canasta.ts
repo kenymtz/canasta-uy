@@ -3,6 +3,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 
 import type { Generico } from "../lib/api";
 import { cantidadInicial, paso } from "../lib/pasos";
+import { NOMBRES_VERSION_1 } from "./nombresVersion1";
 
 export interface Ubicacion {
   departamento: string;
@@ -11,24 +12,31 @@ export interface Ubicacion {
   lon: number;
 }
 
+/**
+ * Nombre del genérico → cantidad en su unidad base. Se guarda por nombre y no por id: los ids
+ * cambian cada vez que la base se arma de cero (la actualización mensual lo hace), los nombres no.
+ */
+export type Items = Record<string, number>;
+
 /** Una compra que el usuario guardó para cargarla con un toque. */
 export interface Lista {
   nombre: string;
-  items: Record<number, number>;
+  items: Items;
   guardada: string; // fecha ISO
 }
 
 interface EstadoCanasta {
   ubicacion: Ubicacion | null;
   radioKm: number;
-  /** producto_canonico_id → cantidad en la unidad base */
-  items: Record<number, number>;
+  items: Items;
   presupuesto: number | null;
   listas: Lista[];
   elegirUbicacion: (u: Ubicacion) => void;
   setRadio: (km: number) => void;
   sumar: (g: Generico) => void;
   restar: (g: Generico) => void;
+  /** Saca de la canasta productos que ya no tienen precios (las listas no se tocan). */
+  quitar: (nombres: string[]) => void;
   /** Guarda la canasta actual; si ya hay una lista con ese nombre, la actualiza. */
   guardarLista: (nombre: string) => void;
   cargarLista: (nombre: string) => void;
@@ -39,6 +47,25 @@ interface EstadoCanasta {
 
 // Evita arrastrar errores de coma flotante (0,1 + 0,2 = 0,30000000000000004)
 const redondear = (n: number) => Math.round(n * 1000) / 1000;
+
+/**
+ * Pasa lo guardado por versiones anteriores al formato actual.
+ * Versión 0 → 1: se agregan las listas. Versión 1 → 2: los productos pasan de id a nombre.
+ */
+export function migrar(guardado: unknown, version: number): Partial<EstadoCanasta> {
+  const estado = { listas: [], ...(guardado as object) } as Partial<EstadoCanasta>;
+  if (version < 2) {
+    const aNombres = (items: Items = {}): Items =>
+      Object.fromEntries(
+        Object.entries(items)
+          .filter(([id]) => NOMBRES_VERSION_1[Number(id)])
+          .map(([id, cantidad]) => [NOMBRES_VERSION_1[Number(id)], cantidad]),
+      );
+    estado.items = aNombres(estado.items);
+    estado.listas = (estado.listas ?? []).map((l) => ({ ...l, items: aNombres(l.items) }));
+  }
+  return estado;
+}
 
 // localStorage no existe fuera del navegador (por ejemplo, en los tests)
 const almacenamiento = createJSONStorage(() =>
@@ -61,21 +88,26 @@ export const useCanasta = create<EstadoCanasta>()(
 
       sumar: (g) =>
         set(({ items }) => {
-          const actual = items[g.producto_canonico_id];
+          const actual = items[g.nombre];
           const nueva = actual === undefined ? cantidadInicial(g) : actual + paso(g);
-          return { items: { ...items, [g.producto_canonico_id]: redondear(nueva) } };
+          return { items: { ...items, [g.nombre]: redondear(nueva) } };
         }),
 
       restar: (g) =>
         set(({ items }) => {
-          const actual = items[g.producto_canonico_id];
+          const actual = items[g.nombre];
           if (actual === undefined) return {};
           const nueva = redondear(actual - paso(g));
           const resto = { ...items };
-          if (nueva <= 0) delete resto[g.producto_canonico_id];
-          else resto[g.producto_canonico_id] = nueva;
+          if (nueva <= 0) delete resto[g.nombre];
+          else resto[g.nombre] = nueva;
           return { items: resto };
         }),
+
+      quitar: (nombres) =>
+        set(({ items }) => ({
+          items: Object.fromEntries(Object.entries(items).filter(([n]) => !nombres.includes(n))),
+        })),
 
       guardarLista: (nombre) =>
         set(({ items, listas }) => {
@@ -100,9 +132,8 @@ export const useCanasta = create<EstadoCanasta>()(
     {
       name: "canasta-uy",
       storage: almacenamiento,
-      // Versión 1 agrega las listas guardadas; lo guardado antes sigue valiendo
-      version: 1,
-      migrate: (guardado) => ({ listas: [], ...(guardado as object) }) as unknown as EstadoCanasta,
+      version: 2,
+      migrate: (guardado, version) => migrar(guardado, version) as EstadoCanasta,
     },
   ),
 );

@@ -5,18 +5,19 @@ import { useMemo, useState } from "react";
 import type { Generico } from "../lib/api";
 import { IconoCategoria } from "../lib/categorias";
 import { normalizar, partesCantidad } from "../lib/formato";
-import type { Lista } from "../store/canasta";
+import type { Items, Lista } from "../store/canasta";
 import { MisListas } from "./MisListas";
 
 const TU_CANASTA = "Tu canasta";
 
 interface Props {
   genericos: Generico[];
-  items: Record<number, number>;
+  items: Items;
   presupuesto: number | null;
   listas: Lista[];
   onSumar: (g: Generico) => void;
   onRestar: (g: Generico) => void;
+  onQuitar: (nombres: string[]) => void;
   onVaciar: () => void;
   onPresupuesto: (monto: number | null) => void;
   onGuardarLista: (nombre: string) => void;
@@ -51,11 +52,17 @@ export function Canasta(p: Props) {
   const categorias = useMemo(() => [...new Set(genericos.map((g) => g.categoria))], [genericos]);
   const [categoria, setCategoria] = useState<string>(cantidadItems > 0 ? TU_CANASTA : "Almacén");
   const [busqueda, setBusqueda] = useState("");
+  // Productos de la canasta (o de una lista vieja) que ya no tienen precios vigentes
+  const sinPrecios = useMemo(() => {
+    if (genericos.length === 0) return []; // todavía no cargó el catálogo
+    const nombres = new Set(genericos.map((g) => g.nombre));
+    return Object.keys(items).filter((n) => !nombres.has(n));
+  }, [genericos, items]);
 
   const visibles = useMemo(() => {
     const texto = normalizar(busqueda.trim());
     if (texto) return genericos.filter((g) => normalizar(g.nombre).includes(texto));
-    if (categoria === TU_CANASTA) return genericos.filter((g) => g.producto_canonico_id in items);
+    if (categoria === TU_CANASTA) return genericos.filter((g) => g.nombre in items);
     return genericos.filter((g) => g.categoria === categoria);
   }, [genericos, busqueda, categoria, items]);
 
@@ -126,6 +133,18 @@ export function Canasta(p: Props) {
         </div>
       )}
 
+      {sinPrecios.length > 0 && (
+        <div className="flex items-start justify-between gap-3 rounded-caja border border-dashed border-alerta/50 px-4 py-3 text-sm">
+          <p className="text-pretty">
+            <span className="font-medium text-alerta">Sin precios vigentes:</span> {sinPrecios.join(", ")}. No se
+            tienen en cuenta en la cotización.
+          </p>
+          <button type="button" className={botonSecundario} onClick={() => p.onQuitar(sinPrecios)}>
+            Quitar
+          </button>
+        </div>
+      )}
+
       {visibles.length === 0 ? (
         <p className="rounded-caja border border-dashed border-linea px-4 py-6 text-center text-sm text-tinta-suave">
           {busqueda
@@ -135,7 +154,7 @@ export function Canasta(p: Props) {
       ) : (
         <ul className="flex flex-col divide-y divide-linea rounded-caja border border-linea bg-ticket">
           {visibles.map((g) => {
-            const cantidad = items[g.producto_canonico_id];
+            const cantidad = items[g.nombre];
             const elegido = cantidad !== undefined;
             return (
               <li key={g.producto_canonico_id} className="flex items-center gap-3 px-3 py-2.5">

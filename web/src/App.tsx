@@ -24,6 +24,7 @@ export default function App() {
     setRadio,
     sumar,
     restar,
+    quitar,
     vaciar,
     setPresupuesto,
     guardarLista,
@@ -35,8 +36,8 @@ export default function App() {
   const [comercios, setComercios] = useState<Comercio[]>([]);
   const [genericos, setGenericos] = useState<Generico[]>([]);
   const [seleccionado, setSeleccionado] = useState<number | null>(null);
-  const cotizacion = useCotizacion({ ubicacion, radioKm, items, presupuesto });
   const genericosPorNombre = useMemo(() => new Map(genericos.map((g) => [g.nombre, g])), [genericos]);
+  const cotizacion = useCotizacion({ ubicacion, radioKm, items, presupuesto, genericos: genericosPorNombre });
 
   // Con resultados nuevos, no queda nada abierto en la lista
   useEffect(() => setSeleccionado(null), [cotizacion.resultados]);
@@ -109,6 +110,7 @@ export default function App() {
           listas={listas}
           onSumar={sumar}
           onRestar={restar}
+          onQuitar={quitar}
           onVaciar={vaciar}
           onPresupuesto={setPresupuesto}
           onGuardarLista={guardarLista}
