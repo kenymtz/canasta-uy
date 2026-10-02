@@ -1,0 +1,9 @@
+# Cabeceras de seguridad que aplica Cloudflare Pages a toda la web.
+# Ver docs/SEGURIDAD.md. No se pone una CSP de scripts/conexiones porque la lectura de
+# boletas (tesseract) y el mapa (workers blob:) cargan desde varios orígenes; queda pendiente.
+/*
+  X-Frame-Options: DENY
+  Content-Security-Policy: frame-ancestors 'none'
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Content-Type-Options: nosniff
+  Permissions-Policy: geolocation=(), camera=(), microphone=(), payment=(), usb=(), interest-cohort=()
