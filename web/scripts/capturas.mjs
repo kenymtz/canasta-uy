@@ -6,8 +6,10 @@ import { chromium } from "playwright";
 const [url = "http://web:5173", salida = "/out"] = process.argv.slice(2);
 
 const PANTALLAS = [
-  { nombre: "escritorio", viewport: { width: 1440, height: 900 }, paginaCompleta: false },
-  { nombre: "celular", viewport: { width: 390, height: 844 }, paginaCompleta: true, isMobile: true },
+  // La portada usa Montevideo: es la capital, tiene ~500 comercios (el mapa se ve lleno) y el
+  // río queda solo en el borde. El celular usa Salto, que entra entero en la pantalla angosta.
+  { nombre: "escritorio", viewport: { width: 1440, height: 900 }, paginaCompleta: false, ciudad: "Montevideo" },
+  { nombre: "celular", viewport: { width: 390, height: 844 }, paginaCompleta: true, isMobile: true, ciudad: "Salto" },
 ];
 
 // Listas de ejemplo que quedan guardadas antes de sacar las capturas
@@ -60,7 +62,7 @@ for (const pantalla of PANTALLAS) {
     await pagina.goto(url, { waitUntil: "networkidle" });
     await guardarListas(pagina);
     await pagina.reload({ waitUntil: "networkidle" });
-    await pagina.getByLabel("Departamento").selectOption("Salto");
+    await pagina.getByLabel("Departamento").selectOption(pantalla.ciudad);
     await pagina.getByRole("button", { name: /^Compra del mes/ }).click();
     await pagina.getByRole("article", { name: /Ticket de/ }).waitFor({ timeout: 15000 });
     await pagina.waitForTimeout(1500); // que terminen de cargar los mosaicos del mapa
