@@ -416,9 +416,8 @@ a Singapur. Si la URCDP pide aclaración, llega a uycanasta@gmail.com. Frutas y 
 el mail desde uycanasta@gmail.com el 01/10/2026). SIPC de un año
 nuevo: la actualización mensual lo detecta sola (`pipelines/fuentes/sipc_anio_nuevo.py`) y
 abre un issue en GitHub con lo que hay que hacer. **Auditoría de seguridad (02/10/2026, `docs/SEGURIDAD.md`):** sin
-nada crítico; datos de usuarios aislados (RLS verificada contra la base real y en local). A
-corregir en Supabase: desactivar el registro por email (solo Google) y borrar la cuenta de prueba
-pentest-canasta-001@mailinator.com. Corregido en código: cabeceras anti-clickjacking y
+nada crítico; datos de usuarios aislados (RLS verificada contra la base real y en local). Corregido el 02/10/2026: registro por email desactivado en Supabase (solo Google) y cuenta de
+prueba borrada; re-test confirma email_provider_disabled. Corregido en código: cabeceras anti-clickjacking y
 Permissions-Policy en `web/public/_headers`. Cloudflare: el proyecto `canastauy` está en la cuenta de Augusto
 (verificado el 01/10/2026); "No Git connection" es lo esperado (publica el workflow con
 wrangler; no conectar Git en Cloudflare o se publicaría dos veces).

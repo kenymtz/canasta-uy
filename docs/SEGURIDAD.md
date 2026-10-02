@@ -9,8 +9,8 @@ del proyecto). La superficie es chica: web estática en Cloudflare Pages + base 
 ## Resultado
 
 Nada crítico. Los datos de los usuarios están aislados: sin sesión no se puede leer, escribir ni
-borrar nada, y la clave secreta no está expuesta. Se encontró **una** configuración para endurecer
-(registro por email abierto) y **una** mejora de cabeceras (clickjacking), más notas menores.
+borrar nada, y la clave secreta no está expuesta. Se encontraron dos puntos para endurecer (registro por email abierto y cabeceras de
+clickjacking); **ambos corregidos y re-verificados el 02/10/2026.**
 
 ## Pruebas hechas y resultado
 
@@ -33,7 +33,10 @@ borrar nada, y la clave secreta no está expuesta. Se encontró **una** configur
 
 ## Hallazgos
 
-### 1. Registro por email/contraseña abierto (Medio) — requiere acción en Supabase
+### 1. Registro por email/contraseña abierto (Medio) — CORREGIDO (02/10/2026)
+
+> Resuelto: Augusto desactivó el proveedor Email en Supabase y borró la cuenta de prueba.
+> Re-test: crear cuenta y entrar por email devuelven `email_provider_disabled`; Google sigue andando.
 
 La app solo ofrece "Entrar con Google", pero en Supabase el proveedor **Email** sigue activo y el
 registro no está restringido. Por la API se puede crear una cuenta email/contraseña sin pasar por
