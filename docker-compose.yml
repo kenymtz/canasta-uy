@@ -1,6 +1,6 @@
 # Canasta UY — infraestructura local
 #
-#   docker compose up -d                 → Postgres (PostGIS + pgvector), Metabase, la API y la web
+#   docker compose up -d                 → Postgres (PostGIS), Metabase, la API y la web
 #   docker compose --profile n8n up -d   → además levanta un n8n propio del proyecto
 #   docker compose run --rm pipelines python -m pipelines.fuentes.sipc
 #   docker compose --profile jupyter up -d   → Jupyter Lab con el mismo entorno
@@ -33,7 +33,7 @@ x-python: &python
 services:
   postgres:
     build: ./docker/postgres
-    image: precios-frontera/postgres:17-postgis-pgvector
+    image: precios-frontera/postgres:17-postgis
     container_name: pf-postgres
     restart: unless-stopped
     environment:

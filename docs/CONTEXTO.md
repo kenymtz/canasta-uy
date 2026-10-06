@@ -117,11 +117,11 @@ GitHub como repositorio público: https://github.com/kenymtz/canasta-uy (renombr
 de Docker Compose (`name: precios-frontera`) y el volumen `pf_pgdata` conservan el nombre viejo:
 cambiar el `name` del compose crearía un volumen nuevo y vacío.
 
-- `docker-compose.yml`: Postgres 17 + PostGIS + pgvector (puerto **5433**, solo en
+- `docker-compose.yml`: Postgres 17 + PostGIS (puerto **5433**, solo en
   127.0.0.1), Metabase (puerto **3000**), n8n opcional con `--profile n8n` (puerto **5679**),
   servicio `pipelines` (`docker compose run --rm pipelines python -m ...`) y Jupyter Lab
   con `--profile jupyter` (puerto **8888**).
-- `docker/postgres/Dockerfile`: imagen postgis/postgis:17-3.5 + postgresql-17-pgvector.
+- `docker/postgres/Dockerfile`: imagen postgis/postgis:17-3.5 (solo PostGIS).
 - `docker/python/Dockerfile`: python:3.11-slim + `requirements.txt`; el repo se monta en `/app`.
 - `sql/init/`:
   - `00_extensiones.sql`: postgis, vector, pg_trgm, unaccent; base `metabase`; schemas `raw`, `core`, `mart`.
@@ -415,7 +415,10 @@ a Singapur. Si la URCDP pide aclaración, llega a uycanasta@gmail.com. Frutas y 
 **en espera de que la UAM responda** si se pueden reutilizar sus precios (Augusto mandó
 el mail desde uycanasta@gmail.com el 01/10/2026). SIPC de un año
 nuevo: la actualización mensual lo detecta sola (`pipelines/fuentes/sipc_anio_nuevo.py`) y
-abre un issue en GitHub con lo que hay que hacer. **Auditoría de seguridad (02/10/2026, `docs/SEGURIDAD.md`):** sin
+abre un issue en GitHub con lo que hay que hacer. **pgvector removido (06/10/2026):** el
+repo apt 'bullseye-pgdg' dejó de publicar su índice y rompía el build de la imagen en la
+actualización mensual; pgvector no se usaba (los embeddings quedaron descartados), así que se
+sacó del Dockerfile, de las extensiones y de las columnas del esquema. **Auditoría de seguridad (02/10/2026, `docs/SEGURIDAD.md`):** sin
 nada crítico; datos de usuarios aislados (RLS verificada contra la base real y en local). Corregido el 02/10/2026: registro por email desactivado en Supabase (solo Google) y cuenta de
 prueba borrada; re-test confirma email_provider_disabled. Corregido en código: cabeceras anti-clickjacking y
 Permissions-Policy en `web/public/_headers`. Cloudflare: el proyecto `canastauy` está en la cuenta de Augusto

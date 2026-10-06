@@ -55,12 +55,8 @@ CREATE TABLE core.producto_canonico (
     categoria       text,
     cantidad_base   numeric NOT NULL,          -- 1
     unidad_base     text    NOT NULL CHECK (unidad_base IN ('kg', 'l', 'unidad', 'm')),
-    -- 768 dimensiones: tamaño recomendado para gemini-embedding con salida reducida.
-    -- Si cambiás de modelo, ajustá esta dimensión.
-    embedding       vector(768),
     UNIQUE (nombre, cantidad_base, unidad_base)
 );
-CREATE INDEX ON core.producto_canonico USING hnsw (embedding vector_cosine_ops);
 
 CREATE TABLE core.producto_fuente (
     id                      bigserial PRIMARY KEY,
@@ -72,7 +68,6 @@ CREATE TABLE core.producto_fuente (
     ean                     text,
     cantidad                numeric,           -- 1000
     unidad                  text,              -- 'ml'
-    embedding               vector(768),
     UNIQUE (fuente_id, id_externo)
 );
 CREATE INDEX ON core.producto_fuente USING gin (descripcion_original gin_trgm_ops);
@@ -81,7 +76,7 @@ CREATE INDEX ON core.producto_fuente USING gin (descripcion_original gin_trgm_op
 CREATE TABLE core.match_producto (
     producto_fuente_id      bigint  PRIMARY KEY REFERENCES core.producto_fuente ON DELETE CASCADE,
     producto_canonico_id    bigint  NOT NULL REFERENCES core.producto_canonico,
-    metodo                  text    NOT NULL CHECK (metodo IN ('ean', 'regla', 'embedding', 'manual')),
+    metodo                  text    NOT NULL CHECK (metodo IN ('ean', 'regla', 'manual')),
     confianza               numeric(4, 3) NOT NULL CHECK (confianza BETWEEN 0 AND 1),
     revisado                boolean NOT NULL DEFAULT false,
     creado_en               timestamptz NOT NULL DEFAULT now()

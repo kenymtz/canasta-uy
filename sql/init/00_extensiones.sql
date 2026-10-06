@@ -4,7 +4,6 @@
 CREATE DATABASE metabase;
 
 CREATE EXTENSION IF NOT EXISTS postgis;   -- geografía: comercios, distancias
-CREATE EXTENSION IF NOT EXISTS vector;    -- pgvector: embeddings de productos
 CREATE EXTENSION IF NOT EXISTS pg_trgm;   -- similitud de texto (matching por reglas)
 CREATE EXTENSION IF NOT EXISTS unaccent;  -- normalizar "Leche Entera" / "leche éntera"
 
